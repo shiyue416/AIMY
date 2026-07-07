@@ -1,19 +1,17 @@
-# fusion-router — 四源统一安全技能调度中枢
+# fusion-router — 自动挖洞skill
 
 > 一个文件调度 940+ 安全技能 + 71 自动渗透工具 + 52MB 漏洞资源
 
-## 一句话
 
-**HackSkills = 攻击 · Anthropic = 防御 · src-hunter = 深度 · Python = 执行**
 
 ## 覆盖
 
-| 源 | 技能数 | 视角 | 位置 |
+ 技能数 | 视角 |
 |----|--------|------|------|
-| HackSkills (四月) | 101 技能 + 71 Python 工具 | 攻击/利用 | `../四月-skill-main/` |
-| Anthropic Cybersecurity | 817 技能 | 防御/取证/合规 | `../Anthropic-Cybersecurity-Skills-1.3.0/` |
-| src-hunter | 52MB 深度资源 | 方法论/Payload | `.claude/skills/src-hunter/` |
-| 洺熙注入层 | 5 配置 + Hook | 上下文注入 | `../安全研究上下文注入/` |
+ 101 技能 + 71 Python 工具 | 攻击/利用 
+ 817 技能 | 防御/取证/合规 
+52MB 深度资源 | 方法论/Payload 
+ 5 配置 + Hook | 上下文注入 
 
 ## 使用
 
