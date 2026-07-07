@@ -1,0 +1,8 @@
+{
+  "flags": "-iE",
+  "patterns": [
+    "[?&](redirect|redirect_uri|redirect_url|return|return_url|return_to|next|target|goto|url|link|dest|destination|continue|follow|referer|origin|back|from|redir)=",
+    "[?&](callback|cb|jsonp|jsonpCallback|callback_url)=",
+    "[?&](state|nonce)="
+  ]
+}

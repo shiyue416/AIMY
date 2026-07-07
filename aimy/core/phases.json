@@ -1,0 +1,392 @@
+{
+  "_meta": {
+    "source": "SKILL.md 七阶段路由表",
+    "version": "1.0",
+    "updated": "2026-07-02"
+  },
+
+  "phases": {
+    "p0": {
+      "name": "红线",
+      "order": 0,
+      "auto": true,
+      "prompt": "Safety Gate 自动生效（只读+限速+scope校验），无需操作",
+      "action": "safety_gate",
+      "model": null,
+      "output": null
+    },
+    "p1": {
+      "name": "接单",
+      "order": 1,
+      "auto": false,
+      "prompt": "填写 scope / out-of-scope / 赏金 / 时间盒",
+      "checklist": [
+        "In-scope 资产逐条列明",
+        "Out-of-scope 禁测项列明",
+        "payout / disclosure / safe-harbor 规则确认",
+        "时间盒：6h / 单日 / HVV / 月度"
+      ],
+      "model": null,
+      "action": "manual_input",
+      "output": "scope_确认"
+    },
+    "p2": {
+      "name": "被动侦察",
+      "order": 2,
+      "auto": true,
+      "prompt": "零发包资产收集，≥3维覆盖",
+      "cli": "python -m aimy.tools.recon_pipeline --target {target}",
+      "action": "recon_pipeline",
+      "model": "groq",
+      "dimensions": ["被动子域名", "HTTP存活", "历史URL", "JS端点", "技术指纹", "攻击面", "端口扫描", "目录枚举"],
+      "output": "recon_{target}_*/ 目录 + 活资产清单",
+      "fallback": {
+        "condition": "subfinder/httpx/gau 任一缺失",
+        "action": "aimy/tools/ 模块替代"
+      }
+    },
+    "p3": {
+      "name": "主动枚举",
+      "order": 3,
+      "auto": true,
+      "prompt": "限速发包，输出活资产矩阵：域→端口→服务→指纹→JS端点",
+      "requires": "p2_complete",
+      "action": "run_enum",
+      "model": "deepseek",
+      "tools": {
+        "参数挖掘": "aimy/tools/param_miner.py",
+        "全站爬取": "aimy/tools/crawler.py",
+        "SPA爬取": "aimy/tools/spa_crawler.py",
+        "服务指纹": "aimy/tools/active_prober.py",
+        "攻击面深度": "aimy/tools/attack_surface.py"
+      },
+      "conditional": [
+        {"match": "国产OA|中间件", "read": "references/dictionaries/default-credentials-cn.md"},
+        {"match": "WordPress", "run": "wpscan"},
+        {"match": "Tomcat", "test": "/manager/html 默认密码"},
+        {"match": "Jenkins", "test": "/script 未授权"},
+        {"match": "K8s|Kubernetes", "test": "/api/v1/namespaces"},
+        {"match": "MinIO", "test": "minioadmin:minioadmin"}
+      ],
+      "output": "host_tech.txt",
+      "rate_limit": "≤1 req/s, ≤500 req/day"
+    },
+    "p4": {
+      "name": "漏洞狩猎",
+      "order": 4,
+      "auto": true,
+      "prompt": "信号→playbook→工具 三级映射，命中即停，卡壳兜底",
+      "requires": "p3_complete",
+      "action": "run_hunt",
+      "model": "longcat",
+      "signal_map": {
+        "正则_actuator_swagger": {
+          "match": "actuator|swagger|default_port",
+          "playbook": "unauth-access.md",
+          "tool": "aimy/tools/attack_surface.py"
+        },
+        "正则_git_env_backup": {
+          "match": "\\.git|\\.svn|heapdump|backup",
+          "playbook": "info-disclosure.md",
+          "tool": "aimy/tools/recon/git_leak.py"
+        },
+        "正则_idor": {
+          "match": "id_traversal|user_id_enum",
+          "playbook": "arbitrary-x-authz.md",
+          "tool": "aimy/tools/dual_session.py"
+        },
+        "正则_bizlogic": {
+          "match": "password_reset|payment|coupon|order|withdraw",
+          "playbook": "logic-flaws/00-index.md",
+          "tool": "aimy/tools/biz_logic_scanner.py"
+        },
+        "正则_oauth_jwt": {
+          "match": "oauth|saml|jwt|redirect_uri",
+          "playbook": "oauth-saml-jwt/00-index.md",
+          "tool": "aimy/tools/jwt_detector.py"
+        },
+        "正则_bola": {
+          "match": "rest_api|bola|mass_assignment",
+          "playbook": "api-rest/00-index.md",
+          "tool": null
+        },
+        "正则_sqli": {
+          "match": "user_input_in_db|sql_error|id_parameter",
+          "playbook": "sqli.md",
+          "tool": "aimy/tools/sql_injection.py"
+        },
+        "正则_rce": {
+          "match": "deserialization|ssti|xxe|prototype|framework_rce",
+          "playbook": "rce/00-index.md",
+          "tool": "aimy/tools/deserialization_detector.py"
+        },
+        "正则_ssrf": {
+          "match": "url_param|redirect|proxy|fetch|webhook",
+          "playbook": "ssrf-cache-host/00-index.md",
+          "tool": "aimy/tools/ssrf_detector.py"
+        },
+        "正则_lfi": {
+          "match": "file_path|lfi|rfi|path_traversal",
+          "playbook": "path-traversal/00-index.md",
+          "tool": "aimy/tools/lfi_scanner.py"
+        },
+        "正则_xss": {
+          "match": "input_reflected|search_box|html_echo",
+          "playbook": "xss/00-index.md",
+          "tool": "aimy/tools/xss_detector.py"
+        },
+        "正则_smuggling": {
+          "match": "reverse_proxy|cl_te|te_cl",
+          "playbook": "http-smuggling.md",
+          "tool": null
+        },
+        "正则_graphql": {
+          "match": "graphql_endpoint|introspection",
+          "playbook": "graphql.md",
+          "tool": "aimy/tools/graphql_scanner.py"
+        },
+        "正则_race": {
+          "match": "concurrent|toctou|race|竞态",
+          "playbook": "race-conditions.md",
+          "tool": "aimy/tools/race_condition.py"
+        },
+        "正则_dos": {
+          "match": "redos|unlimited_resource|algorithm_complexity",
+          "playbook": "dos.md",
+          "tool": null
+        },
+        "正则_upload": {
+          "match": "file_upload|upload_function",
+          "playbook": "file-upload/00-index.md",
+          "tool": null
+        },
+        "正则_xslt": {
+          "match": "xslt|xml_transform",
+          "playbook": "xslt-injection.md",
+          "tool": null
+        },
+        "正则_llm": {
+          "match": "llm|ai_agent|prompt_entry|chatbot",
+          "playbook": "llm-prompt-injection/00-index.md",
+          "tool": null
+        },
+        "正则_postexploit": {
+          "match": "shell|credential|intranet|内网",
+          "playbook": "intranet-postexp/00-index.md",
+          "tool": null,
+          "load_anthropic": true
+        }
+      },
+      "stuck_fallback": [
+        "references/SRC_终极脑洞.md",
+        "references/业务逻辑拓展骚思路.md",
+        "references/playbooks/methodology/00-index.md",
+        "彦的h1飞轮/05_举一反三机制.md",
+        "彦的h1飞轮/06_排除记录.md"
+      ],
+      "burp_tools": {
+        "ssrf_oob": "collaborator_*",
+        "idor": "auth_diff",
+        "race": "http_race",
+        "manual": "repeater_send",
+        "xss_reflection": "analyze_find_reflected",
+        "param_enum": "intruder_send",
+        "diff": "analyze_diff"
+      },
+      "output": "vuln_candidates"
+    },
+    "p5": {
+      "name": "验证门",
+      "order": 5,
+      "auto": true,
+      "prompt": "8问+4验收门，一票否决",
+      "requires": "p4_findings",
+      "action": "run_validate",
+      "model": "deepseek",
+      "checklist": [
+        "Q1: 能 step by step 复现吗？（写不出 HTTP 包就停）",
+        "Q2: 影响在程序接受列表吗？（不在就停）",
+        "Q3: 根因在 scope 资产上吗？（不在就停）",
+        "Q4: 需要管理员权限吗？（是就停）",
+        "Q5: 是已知/已接受行为吗？（是就停）",
+        "Q6: 能证明实际业务影响吗？（不能就降级）",
+        "Q7: 在禁止提交清单吗？（在就停）",
+        "Q8: 换 session 还能复现吗？（不能就停）"
+      ],
+      "validator": {
+        "enabled": true,
+        "engine": "aimy/tools/verification_oracle.py",
+        "xbow_compat": true,
+        "steps": ["SimHash去重", "curl复现→True/False", "Canary OOB确认"]
+      },
+      "output": "validated_findings"
+    },
+    "p6": {
+      "name": "报告",
+      "order": 6,
+      "auto": false,
+      "prompt": "三段式报告 + PII脱敏",
+      "requires": "p5_passed",
+      "model": "longcat",
+      "must_read": [
+        "references/compliance.md",
+        "references/templates/report-submission.md"
+      ],
+      "output": "report.md",
+      "pii_masking": "手机/邮箱留前2后2, Token留前2后2, IP打码末段"
+    },
+    "p7": {
+      "name": "飞轮复盘",
+      "order": 7,
+      "auto": true,
+      "prompt": "自动记录技法+评分+Skill质量门",
+      "action": "run_flywheel",
+      "model": null,
+      "auto_triggers": [
+        "record_finding() → PatternDB + FeedbackDB + HuntJournal",
+        "H1Scorer.score() → h1_rankings.jsonl",
+        "SkillQualityGate.evaluate() → skill_candidates.json",
+        "techniques.jsonl 追加"
+      ],
+      "manual": "python aimy.py --flywheel --skip-h1",
+      "output": "evx_digest.json"
+    },
+
+    "scene_selector": {
+      "name": "场景路由",
+      "order": -1,
+      "auto": true,
+      "prompt": "根据 AIMY_SCENE 自动选择流程: bounty/pentest/redteam",
+      "action": "route_scene",
+      "routes": {
+        "bounty": ["p0","p1","p2","p3","p4","p5","p6","p7"],
+        "pentest": ["p0","p1","p2","p3","p4","pe1","pe2","pe3","p5","p6","p7"],
+        "redteam": ["p0","p1","p2","p3","rt1","rt2","rt3","rt4","rt5","p6","p7"]
+      },
+      "output": "scenes"
+    },
+
+    "pe1": {
+      "name": "提权 (Privesc)",
+      "order": 41,
+      "auto": true,
+      "scene": "pentest",
+      "prompt": "获取初始访问权限后提升至更高权限",
+      "action": "anthropic_route",
+      "model": "longcat",
+      "anthropic_skills": [
+        "linux-privilege-escalation",
+        "windows-privilege-escalation",
+        "abusing-shadow-credentials-for-privesc",
+        "active-directory-certificate-services",
+        "active-directory-kerberos-attacks"
+      ],
+      "output": "elevated_access"
+    },
+
+    "pe2": {
+      "name": "横向移动 (Lateral)",
+      "order": 42,
+      "auto": true,
+      "scene": "pentest",
+      "prompt": "在内部网络中横向移动到其他主机",
+      "action": "anthropic_route",
+      "model": "longcat",
+      "anthropic_skills": [
+        "windows-lateral-movement",
+        "linux-lateral-movement",
+        "ntlm-relay-coercion",
+        "tunneling-and-pivoting"
+      ],
+      "output": "lateral_access"
+    },
+
+    "pe3": {
+      "name": "数据外泄 (Exfil)",
+      "order": 43,
+      "auto": true,
+      "scene": "pentest",
+      "prompt": "在授权范围内获取目标数据",
+      "action": "anthropic_route",
+      "model": "deepseek",
+      "anthropic_skills": [
+        "analyzing-dns-logs-for-exfiltration",
+        "building-c2-infrastructure-with-sliver-framework"
+      ],
+      "data_limits": "必须遵守 Phase 0 红线，≤3条验证",
+      "output": "exfil_data"
+    },
+
+    "rt1": {
+      "name": "初始打点 (Initial Access)",
+      "order": 31,
+      "auto": true,
+      "scene": "redteam",
+      "prompt": "获取初始入口点",
+      "action": "run_hunt",
+      "model": "longcat",
+      "anthropic_skills": ["credential-attack", "social-engineering"],
+      "output": "foothold"
+    },
+
+    "rt2": {
+      "name": "持久化 (Persistence)",
+      "order": 32,
+      "auto": true,
+      "scene": "redteam",
+      "prompt": "建立持久化驻留",
+      "action": "anthropic_route",
+      "model": "longcat",
+      "anthropic_skills": [
+        "analyzing-persistence-mechanisms-in-linux",
+        "analyzing-malware-persistence-with-autoruns",
+        "analyzing-uefi-bootkit-persistence"
+      ],
+      "output": "persistent_access"
+    },
+
+    "rt3": {
+      "name": "防御规避 (Evasion)",
+      "order": 33,
+      "auto": true,
+      "scene": "redteam",
+      "prompt": "绕过防御检测，保持隐蔽",
+      "action": "anthropic_route",
+      "model": "longcat",
+      "anthropic_skills": [
+        "analyzing-malware-sandbox-evasion-techniques",
+        "windows-av-evasion",
+        "anti-debugging-techniques"
+      ],
+      "output": "undetected"
+    },
+
+    "rt4": {
+      "name": "C2 通信",
+      "order": 34,
+      "auto": true,
+      "scene": "redteam",
+      "prompt": "建立命令与控制信道",
+      "action": "anthropic_route",
+      "model": "longcat",
+      "anthropic_skills": [
+        "building-c2-infrastructure-with-sliver-framework",
+        "building-c2-redirector-infrastructure",
+        "analyzing-cobaltstrike-malleable-c2-profiles"
+      ],
+      "output": "c2_channel"
+    },
+
+    "rt5": {
+      "name": "痕迹清理 (OpSec)",
+      "order": 35,
+      "auto": true,
+      "scene": "redteam",
+      "prompt": "清除操作痕迹",
+      "action": "anthropic_route",
+      "model": "deepseek",
+      "anthropic_skills": ["memory-forensics-volatility", "traffic-analysis-pcap"],
+      "output": "clean_exit"
+    }
+  }
+}

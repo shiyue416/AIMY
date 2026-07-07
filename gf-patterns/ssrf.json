@@ -1,0 +1,11 @@
+{
+  "flags": "-iE",
+  "patterns": [
+    "[?&](url|uri|link|src|source|target|dest|destination|redirect|redirect_uri|return|next|goto|proxy|fetch|load|download|file|path|domain|host|callback|webhook|pingback|endpoint|address)=",
+    "=https?://",
+    "=//[a-z0-9]",
+    "image[_-]?url=",
+    "avatar[_-]?url=",
+    "thumbnail[_-]?url="
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "flags": "-iE",
+  "patterns": [
+    "[?&](upload|file|attachment|avatar|photo|image|picture|document|doc|media|video|audio|import|export)=",
+    "(upload|uploader|file-upload|attachment)",
+    "\\.(php|asp|aspx|jsp|jspx|phtml|shtml|php5|php7|cgi|pl|py|rb|sh|bash)($|\\?)"
+  ]
+}

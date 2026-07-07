@@ -1,0 +1,13 @@
+{
+  "flags": "-iE",
+  "patterns": [
+    "[?&](file|path|dir|folder|directory|doc|document|template|tpl|theme|style|layout|page|view|include|require|load|read|open|show|display|download|get|fetch|retrieve)=",
+    "=[a-zA-Z0-9/_.-]*\\.\\./",
+    "=[a-zA-Z0-9/_.-]*\\.(pdf|doc|docx|xls|xlsx|csv|txt|xml|json|yml|yaml|ini|cfg|conf|log|sql|bak|backup|zip|tar|gz|rar)",
+    "filepath=",
+    "filename=",
+    "template=",
+    "theme=",
+    "lang(uage)?="
+  ]
+}

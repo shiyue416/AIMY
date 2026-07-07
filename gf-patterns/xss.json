@@ -1,0 +1,9 @@
+{
+  "flags": "-iE",
+  "patterns": [
+    "[?&](q|search|query|keyword|term|s|find|filter|text|msg|comment|name|title|desc|body|content|data|value|url|redirect|return|next|callback|cb|jsonp|json|response)=",
+    "[?&](template|tpl|view|page|html|preview|embed)=",
+    "[?&](email|mail|subject|message|note|feedback)=",
+    "[?&](lang|locale|language|country)="
+  ]
+}

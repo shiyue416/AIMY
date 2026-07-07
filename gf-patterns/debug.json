@@ -1,0 +1,14 @@
+{
+  "flags": "-iE",
+  "patterns": [
+    "[?&](debug|test|dev|staging|verbose|log|trace|dump|diag|diagnostics|info|phpinfo|status|health|ping|version|build|commit|hash|env)=",
+    "/api/(debug|test|internal|admin)",
+    "/actuator/",
+    "/.env",
+    "/.git/",
+    "/phpinfo\\.php",
+    "/debug/",
+    "/__debug__/",
+    "/(server-status|server-info)"
+  ]
+}

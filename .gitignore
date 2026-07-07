@@ -1,0 +1,75 @@
+# === 敏感文件 ===
+.env
+*.env
+!*.env.example
+credentials.json
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+**/secrets.*
+
+# === AIMY 遥测/反馈本地缓存（用户私有） ===
+_feedback_cache/
+_telemetry_local/
+.user_test_data/
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+.eggs/
+.venv/
+venv/
+env/
+.uv/
+
+# === IDE ===
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# === 测试输出 ===
+.pytest_cache/
+htmlcov/
+.coverage
+*.lcov
+benchmarks/output/
+benchmarks/*.log
+
+# === 临时文件 ===
+*.log
+*.tmp
+*.temp
+tmp/
+temp/
+*.bak
+
+# === 大型二进制 ===
+*.zip
+*.tar.gz
+*.7z
+*.rar
+!tools/**/*.zip
+
+# === 用户数据（不追踪） ===
+~/.aimy/sessions/
+~/.aimy/scans/
+~/.aimy/cache/
+_memory/
+_feedback/
+*.jsonl
+
+# === Git 但保留结构 ===
+!.gitkeep

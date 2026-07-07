@@ -1,0 +1,11 @@
+{
+  "flags": "-iE",
+  "patterns": [
+    "[?&](id|uid|user_id|pid|product_id|item_id|order_id|uid|uuid|pid|rid|fid|tid|sid|wid|cid|oid|gid|mid|nid)=",
+    "[?&](sort|order|orderby|sortby|sort_by|dir|direction|asc|desc)=",
+    "[?&](filter|filters|where|condition|clause)=",
+    "[?&](limit|offset|page|per_page|count)=",
+    "[?&](type|category|cat|group|status|state|action|cmd|command|method)=",
+    "[?&](username|user|login|email|phone|number)="
+  ]
+}

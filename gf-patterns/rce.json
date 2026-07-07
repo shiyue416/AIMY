@@ -1,0 +1,14 @@
+{
+  "flags": "-iE",
+  "patterns": [
+    "[?&](cmd|command|exec|execute|run|shell|sh|bash|system|process|eval|passthru|popen)=",
+    "[?&](ping|host|ip|domain|addr|address|dns|nslookup|dig|trace|traceroute)=",
+    "[?&](upload|file_path|filename|path|dir|folder|root)=",
+    "[?&](debug|test|verbose|log_level|mode)=",
+    "[?&](ssti|template|render|view)=",
+    "=.*\\|",
+    "=.*;.*",
+    "=.*\\$\\(",
+    "=.*`"
+  ]
+}
