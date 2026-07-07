@@ -31,11 +31,13 @@ from .collector import FeedbackCollector
 # ============================================================
 _BUILTIN_FEEDBACK_TOKEN = os.environ.get(
     "AIMY_FEEDBACK_TOKEN",
-    ""  # ← 待填入 fine-grained PAT (仅 issues:write 权限)
+    ""  # 留空=一键URL模式; 填入 Fine-grained PAT 后变全自动
+    # Fine-grained PAT 生成: https://github.com/settings/tokens?type=beta
+    # 权限: Repository access → AIMY only → Issues → Read and Write
 )
 _DEFAULT_FEEDBACK_REPO = os.environ.get(
     "AIMY_FEEDBACK_REPO",
-    "shiyue416/AIMY"  # 子体→本体 反馈仓库
+    "shiyue416/AIMY"
 )
 
 
