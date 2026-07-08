@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>180+ attack skills &middot; 120+ Python detectors &middot; 3,000+ H1 reports &middot; 50,000 WooYun cases</strong><br>
-  Four-source fusion — HackSkills · Anthropic · src-hunter · Mingxi injection<br>
+  
   <sub>7-phase hunt pipeline · 35 trigger-keyword auto-load · 14-project red-line comparison (45/50)</sub>
 </p>
 
