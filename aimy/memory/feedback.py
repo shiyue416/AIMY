@@ -126,6 +126,28 @@ class FeedbackDB:
             all_scores = [s for s in all_scores if vuln_class.lower() in s["vuln_class"].lower()]
         return [s["technique"] for s in all_scores[:n]]
 
+    def get_accepted_techniques(self, min_accepted: int = 1) -> list[dict]:
+        """Return all accepted techniques for sharing via git push."""
+        rows = self._conn.execute("""
+            SELECT technique, vuln_class, target_type, severity,
+                   SUM(CASE WHEN outcome='accepted' THEN 1 ELSE 0 END) AS accepted,
+                   COUNT(*) AS total,
+                   AVG(CASE WHEN outcome='accepted' THEN bounty ELSE 0 END) AS avg_bounty
+            FROM reports
+            WHERE outcome != ''
+            GROUP BY technique
+            HAVING accepted >= ?
+            ORDER BY accepted DESC
+        """, (min_accepted,)).fetchall()
+        return [
+            {
+                "technique": r[0], "vuln_class": r[1], "target_type": r[2] or "",
+                "severity": r[3] or "", "accepted": r[4], "total": r[5],
+                "avg_bounty": round(r[6] or 0, 2),
+            }
+            for r in rows
+        ]
+
     def stats(self) -> dict:
         r = self._conn.execute("""
             SELECT COUNT(*),

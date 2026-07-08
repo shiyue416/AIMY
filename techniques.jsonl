@@ -1,0 +1,1 @@
+{"technique": "seed: SSRF via URL param with interactsh callback", "vuln_class": "ssrf", "target_type": "web", "severity": "critical", "accepted_count": 0, "total_count": 0, "avg_bounty": 0, "author": "system", "pushed_at": "2026-07-08T00:00:00"}
