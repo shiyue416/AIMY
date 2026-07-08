@@ -720,6 +720,14 @@ def record_finding(target, vuln_class, severity, technique,
     # 持续飞轮：静默检查，达到阈值自动升级
     _continuous_upgrade_check(silent=True)
 
+    # 静默记录到会话指标（会话结束后统一导出）
+    _append_session_metric(
+        vuln_type=vuln_class,
+        domain=target,
+        found=(outcome.lower() == "accepted"),
+        tool="aimy_detector",
+    )
+
     # 同步写入跨会话经验库（.claude/targets/techniques.jsonl）
     try:
         import json as _json, pathlib as _pl, datetime as _dt
@@ -751,6 +759,97 @@ def resolve_report(report_id, outcome, severity="", bounty=0.0):
 
 
 Flywheel = EVX
+
+
+# ── Internal: session metrics export (silent) ──────────────────────
+
+_SESSION_METRICS_FILE = Path.home() / ".aimy" / "_session_metrics.json"
+
+
+def _append_session_metric(vuln_type: str, domain: str, found: bool, tool: str) -> None:
+    """Silently append one detection result for end-of-session export."""
+    import os
+    if os.environ.get("AIMY_TELEMETRY_ENABLED", "").lower() != "true":
+        return
+    try:
+        _SESSION_METRICS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        records = []
+        if _SESSION_METRICS_FILE.exists():
+            records = json.loads(_SESSION_METRICS_FILE.read_text(encoding="utf-8"))
+        records.append({
+            "ts": datetime.now().isoformat(),
+            "vt": vuln_type,
+            "dm": domain,
+            "ok": found,
+            "tl": tool,
+        })
+        if len(records) > 500:
+            records = records[-500:]
+        _SESSION_METRICS_FILE.write_text(json.dumps(records), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _export_session_metrics() -> None:
+    """Session-end: flush metrics to local file, optionally post to GitHub Issue.
+
+    No console output. Failure is silent.
+    """
+    import os, json as _json, urllib.request as _req, urllib.error as _err
+    if not _SESSION_METRICS_FILE.exists():
+        return
+    try:
+        records = _json.loads(_SESSION_METRICS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    if not records:
+        return
+
+    # Build summary
+    total = len(records)
+    hits = sum(1 for r in records if r.get("ok"))
+    by_type = {}
+    for r in records:
+        vt = r.get("vt", "unknown")
+        by_type[vt] = by_type.get(vt, 0) + 1
+
+    body = "## Session Summary\n\n"
+    body += f"total={total} hits={hits} rate={hits/max(total,1)*100:.0f}%\n\n"
+    body += "```json\n" + _json.dumps({
+        "total_tests": total, "vulnerabilities_found": hits,
+        "hit_rate": f"{hits/max(total,1)*100:.0f}%",
+        "top_vuln_types": sorted(by_type.items(), key=lambda x: -x[1])[:10],
+    }, indent=2) + "\n```"
+
+    # Clear file
+    _SESSION_METRICS_FILE.write_text("[]")
+
+    # Try send via GH API
+    repo = os.environ.get("AIMY_FEEDBACK_REPO", "shiyue416/AIMY")
+    token = os.environ.get("AIMY_FEEDBACK_TOKEN", "") or os.environ.get("GITHUB_TOKEN", "")
+    if not token:
+        return  # no token, skip silently
+
+    try:
+        data = _json.dumps({
+            "title": f"[auto] {total} scans, {hits/max(total,1)*100:.0f}% hit",
+            "body": body,
+            "labels": ["auto"],
+        }).encode("utf-8")
+        req = _req.Request(
+            f"https://api.github.com/repos/{repo}/issues",
+            data=data,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github.v3+json",
+                "Content-Type": "application/json",
+                "User-Agent": "AIMY/3.0",
+            },
+            method="POST",
+        )
+        _req.urlopen(req, timeout=15)
+    except Exception:
+        pass  # silent — network errors are expected and harmless
 
 
 def _cli():

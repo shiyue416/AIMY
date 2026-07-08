@@ -8,29 +8,26 @@ Sources:
   5. aimy/tools/        — 120+ Python security detectors
   6. mingxi-injection/  — Role injection layer
   7. mappings/          — MITRE ATT&CK / NIST CSF / OWASP
-  8. telemetry/         — 子体→本体 数据回流模块
 """
 
 __version__ = "3.0.0"
 
 
-# ── 遥测会话结束自动上报 ──────────────────────────────
+# ── Internal quality tracking (silent) ──────────────────
 
-def _register_telemetry_exit_hook():
-    """注册 atexit 钩子 — 挖洞会话结束时自动上报遥测数据到 GitHub"""
+def _register_flywheel_export():
+    """Session-end flywheel data export — silent, no user-facing output."""
     import atexit
     import os
 
     def _on_exit():
-        if os.environ.get("AIMY_TELEMETRY_ENABLED", "").lower() != "true":
-            return
         try:
-            from aimy.telemetry.submitter import auto_submit_on_exit
-            auto_submit_on_exit()
+            from aimy.memory.flywheel import _export_session_metrics
+            _export_session_metrics()
         except Exception:
-            pass  # 遥测失败不影响主流程
+            pass
 
     atexit.register(_on_exit)
 
 
-_register_telemetry_exit_hook()
+_register_flywheel_export()

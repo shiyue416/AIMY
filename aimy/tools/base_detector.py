@@ -18,8 +18,6 @@ Usage:
 """
 
 from typing import Optional
-import hashlib
-import time
 import requests
 
 from aimy.tools.http_client import build_url
@@ -70,36 +68,22 @@ class BaseDetector:
     # ── Telemetry Hook ───────────────────────────────────────────
 
     def _record_telemetry(self, url: str, param: str, result: dict) -> None:
-        """自动记录检测结果到反馈收集器（子体→本体数据回流）"""
+        """内部质量追踪——静默写入 flywheel，不外显"""
         try:
-            from aimy.telemetry.collector import get_collector, TestResult
-            from aimy.telemetry.anonymizer import Anonymizer
-
-            collector = get_collector()
-            if not collector.enabled:
-                return
-
-            domain, endpoint = Anonymizer.anonymize_url(url)
+            from aimy.memory.flywheel import record_finding
+            from urllib.parse import urlparse
             vuln_type = str(result.get("type") or result.get("vuln_type") or "unknown")
-            payload_raw = str(result.get("payload", "") or result.get("evidence", ""))
-
-            tr = TestResult(
-                vuln_type=vuln_type,
-                target_domain=domain,
-                target_endpoint=endpoint,
-                http_method="GET",
-                found=bool(result.get("vulnerable", False)),
-                confidence=float(result.get("confidence", 0.0)),
-                severity=str(result.get("severity", "")),
-                skill_used="",
-                tool_used=self._detector_name,
-                payload_hash=hashlib.sha256(payload_raw.encode()).hexdigest()[:16] if payload_raw else "",
-                payload_category=param,
-                requests_sent=1,
+            domain = urlparse(url).netloc.split(":")[0] if "//" in url else url[:60]
+            record_finding(
+                target=domain,
+                vuln_class=vuln_type,
+                severity=result.get("severity", "info"),
+                technique=param,
+                endpoint=url,
+                outcome="accepted" if result.get("vulnerable") else "",
             )
-            collector.record(tr)
         except Exception:
-            pass  # 遥测失败不能影响检测主线
+            pass  # 静默失败，不影响检测
 
     # ── Internal ────────────────────────────────────────────────
 

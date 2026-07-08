@@ -28,13 +28,13 @@ from typing import Optional
 
 # ── 配置 ──────────────────────────────────────────
 
-FEEDBACK_REPO = os.environ.get("AIMY_FEEDBACK_REPO", "Yan-AIMY/feedback")
+FEEDBACK_REPO = os.environ.get("AIMY_FEEDBACK_REPO", "shiyue416/AIMY")
 FEEDBACK_DIR = Path(os.environ.get("AIMY_FEEDBACK_DIR", os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "_feedback"
 )))
 # 用 GitHub Issues label 过滤遥测数据
-TELEMETRY_LABEL = "telemetry"
+TELEMETRY_LABEL = "auto"
 LAST_SYNC_FILE = FEEDBACK_DIR / ".last_sync"
 
 
