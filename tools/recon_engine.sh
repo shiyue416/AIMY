@@ -40,19 +40,39 @@ else
   touch "$OUTDIR/chaos.txt"
 fi
 
+# Step 3b: OneForAll (全量子域名, 20+ 被动源)
+echo "[*] OneForAll..."
+if [ -f "$HOME/tools/OneForAll/oneforall.py" ]; then
+  OFA_OUT="$OUTDIR/oneforall"
+  mkdir -p "$OFA_OUT"
+  python "$HOME/tools/OneForAll/oneforall.py" --target "$TARGET" --alive False --fmt txt \
+    --path "$OFA_OUT" run 2>/dev/null || true
+  # 从 OneForAll 输出提取子域名
+  if [ -f "$OFA_OUT"/*.txt 2>/dev/null ]; then
+    cat "$OFA_OUT"/*.txt 2>/dev/null | grep -oP '[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.'"$TARGET" | \
+      sort -u > "$OUTDIR/oneforall.txt"
+  else
+    touch "$OUTDIR/oneforall.txt"
+  fi
+  echo "    OneForAll: $(wc -l < "$OUTDIR/oneforall.txt")"
+else
+  echo "    OneForAll: skipped (not installed)"
+  touch "$OUTDIR/oneforall.txt"
+fi
+
 # Step 4: Merge & dedup
-cat "$OUTDIR"/crtsh.txt "$OUTDIR"/subfinder.txt "$OUTDIR"/assetfinder.txt "$OUTDIR"/chaos.txt \
+cat "$OUTDIR"/crtsh.txt "$OUTDIR"/subfinder.txt "$OUTDIR"/assetfinder.txt "$OUTDIR"/chaos.txt "$OUTDIR"/oneforall.txt \
   | sort -u > "$OUTDIR/subs.txt"
 echo "[+] Total unique: $(wc -l < "$OUTDIR/subs.txt")"
 
 # Step 5: DNS resolve
 echo "[*] dnsx..."
-cat "$OUTDIR/subs.txt" | dnsx -silent 2>/dev/null | sort -u > "$OUTDIR/resolved.txt"
+cat "$OUTDIR/subs.txt" | ~/go/bin/dnsx -silent -rate-limit 1 2>/dev/null | sort -u > "$OUTDIR/resolved.txt"
 echo "    Resolved: $(wc -l < "$OUTDIR/resolved.txt")"
 
 # Step 6: Live check
 echo "[*] httpx..."
-cat "$OUTDIR/resolved.txt" | httpx -silent -status-code -title -tech-detect -no-color 2>/dev/null > "$OUTDIR/live.txt"
+cat "$OUTDIR/resolved.txt" | ~/go/bin/httpx -silent -status-code -title -tech-detect -no-color -rate-limit 1 -t 5 2>/dev/null > "$OUTDIR/live.txt"
 echo "    Live: $(wc -l < "$OUTDIR/live.txt")"
 
 echo "[+] Done: $OUTDIR/"

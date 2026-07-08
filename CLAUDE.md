@@ -90,27 +90,29 @@
 Layer 1: CLAUDE.md (本文件)     → 定规矩：身份、优先级、什么值得报/不值得报
 Layer 2: Skills (180 个)        → ★权威方法论 (102原始) + ☆执行层 (14 CBB) + 外部融合
 Layer 3: Commands + Agents       → /recon /hunt /autopilot /validate /report
-Layer 4: Tools (~/.claude/tools/) → 8 shim 脚本 → 六维资产管线
+Layer 4: Tools (~/.claude/tools/ + AIMY/tools/) → 10 Shell 脚本 + 21 Go 工具 + 2 Python 工具 → 七维资产管线
 Layer 5: Memory (~/.claude/targets/)     → 存上下文 + 技术追踪 (techniques.jsonl)
 ```
 
 > **融合路由**: 所有 Skill 路由决策查询 `SKILL.md` (fusion-router)
 > **权威源原则**: 原始 102 Skill = ★权威方法论, CBB Skill = ☆执行层/参考
 
-### 资产收集六维法 (2026-06 新建)
+### 资产收集七维法 (2026-07-08 新增企业维度)
 
 ```
-维度 1: 子域名被动     crt.sh + Chaos + subfinder + amass(-passive)     → 覆盖 85-92%
-维度 2: 排列变异        dnsgen(suffix) + alterx(NLP分词) + 内置引擎       → 1→50 乘法
-维度 3: 图标关联        mmh3 hash → FOFA icon_hash / Shodan http.favicon  → 跨资产发现
-维度 4: ASN/IP 反向     asnmap + amass intel + bgp.he.net + RADB whois    → 网络级关联
-维度 5: CSP 反向情报    CSP响应头解析 → 可信域名清单 → httpx 存活验证     → 免费子域名
-维度 6: JS 源码还原     .js.map → source-map-unpack → TS源码 → 端点+凭据  → 源码级攻击面
+维度 1: 子域名被动     crt.sh + Chaos + subfinder + amass(-passive) + OneForAll(20+源) → 覆盖 90-95%
+维度 2: 企业关联        enscan(ICP备案+分支机构+股权穿透+供应商) → 企业→域名反向发现   → 新增攻击面
+维度 3: 排列变异        dnsgen(suffix) + alterx(NLP分词) + 内置引擎                     → 1→50 乘法
+维度 4: 图标关联        mmh3 hash → FOFA icon_hash / Shodan http.favicon                → 跨资产发现
+维度 5: ASN/IP 反向     asnmap + amass intel + bgp.he.net + RADB whois                  → 网络级关联
+维度 6: CSP 反向情报    CSP响应头解析 → 可信域名清单 → httpx 存活验证                   → 免费子域名
+维度 7: JS 源码还原     .js.map → source-map-unpack → TS源码 → 端点+凭据                → 源码级攻击面
 ```
 
 ```
 ┌─ 被动层 (零发包):  crt.sh + CSP + favicon + GitHub dorking
-├─ 枚举层 (主动):    subfinder + amass + permutation_gen
+├─ 枚举层 (主动):    subfinder + amass + OneForAll + permutation_gen
+├─ 企业层 (工商):    enscan(ICP+分支+股权+供应商) → 域名反向发现
 ├─ 验证层:           dnsx + httpx + cdn_origin
 ├─ 扩展层:           katana + gau + js_sourcemap
 └─ 关联层:           asn_discovery + favicon_hunt + csp_intel
@@ -219,7 +221,8 @@ Hook 注入 `additionalContext` 后，按对应场景模板输出：
 ## Security Research Tech Stack
 
 ### Recon & Enumeration
-- **子域名**: subfinder, amass, assetfinder, massdns, puredns
+- **子域名**: subfinder, amass, assetfinder, massdns, puredns, OneForAll
+- **企业关联**: enscan(ICP备案+分支机构+股权穿透+供应商) → `/enscan-recon`
 - **排列变异**: dnsgen, alterx, goaltdns → `/permutation-gen`
 - **存活验证**: httpx, dnsx, naabu, gowitness
 - **测绘引擎**: FOFA (icon_hash), Shodan (http.favicon.hash), Censys, SecurityTrails
@@ -284,8 +287,10 @@ fix: <description>         # 修复
 ## Quick Commands
 
 ```bash
-# 资产收集六维管线
-/recon target.com                            # web2-recon 标准管线
+# 资产收集七维管线
+/recon target.com                            # web2-recon 标准管线 (Shell)
+/full-recon target.com "企业名"               # 七维全量 (含enscan+OneForAll)
+/enscan-recon "企业名" target.com             # 企业关联 (ICP+分支+股权+供应商)
 /permutation-gen --subs subs.txt -d target --resolve   # 排列变异
 /favicon-hunt --url https://target.com                 # 图标关联
 /asn-discovery --org "Target Corp" --domain target.com # ASN反查
@@ -295,14 +300,15 @@ fix: <description>         # 修复
 
 # 统一七阶段主流程（fusion-router 自动加载后默认走）
 #   Phase 1: Intake     — 接单（scope/规则/时间盒）
-#   Phase 2: Recon      — 六维被动侦察（零发包）
+#   Phase 2: Recon      — 七维被动侦察（零发包）
 #   Phase 3: Enum       — 主动探测（四月工具）
 #   Phase 4: Hunt       — 信号→playbook→工具 三级映射
 #   Phase 5: Validate   — 七问门 + 4验收门
 #   Phase 6: Report     — 模板 + 合规红线
 #   Phase 7: Flywheel   — technique入库 + session_brief刷新
 
-/recon target.com                            # Phase 2 六维被动侦察
+/recon target.com                            # Phase 2 标准侦察
+/full-recon target.com "小米"                # Phase 2 全量侦察 (含企业扩展)
 /hunt target.com                             # Phase 3→4 主动探测+漏洞挖掘
 /validate                                    # Phase 5 七问验证门
 /report                                      # Phase 6 生成报告
@@ -353,7 +359,7 @@ references/              ← 5891 参考文件 (H1报告3029+playbook68+payloade
 mingxi-injection/        ← 洺熙注入配置
 mappings/                ← MITRE+NIST+OWASP
 benchmarks/              ← XBOW 104 靶机测试
-tools/                   ← 8 Shell 脚本 (六维资产管线)
+tools/                   ← 10 Shell 脚本 (七维资产管线)
 scripts/                 ← 同步/校验/注入
 彦的h1飞轮/               ← 116类技法 + 32资源库 + 飞轮数据
 SKILL.md                 ← fusion-router (53KB)
