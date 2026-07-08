@@ -431,17 +431,18 @@ AIMY 针对不同漏洞类启动专项子 Agent：
 
 | 文件 | 内容 | 行数 |
 |------|------|------|
-| [README.md](./README.md) | 本文件 — 概述、用法、模式、安全规则 | ~450 |
+| [README.md](./README.md) | 本文件 — 概述、用法、模式、安全规则 | ~500 |
+| [QUICKSTART.md](./QUICKSTART.md) | 快速入门手册（含每步清单） | ~200 |
+| [DISCLAIMER.md](./DISCLAIMER.md) | 免责声明 — 授权范围、操作红线、责任限制 | ~120 |
 | [SKILL.md](./SKILL.md) | Fusion-router 四源调度中枢（53KB） | 1,033 |
 | [INDEX.md](./INDEX.md) | 完整技能索引 + 交叉引用 | ~600 |
-| [QUICKSTART.md](./QUICKSTART.md) | 快速入门手册（含每步清单） | ~200 |
 | [CLAUDE.md](./CLAUDE.md) | Agent 身份定义、约定、技术栈、优先级 | ~400 |
 
 ---
 
 ## 免责声明
 
-> **本工具仅供合法授权安全测试及教育用途。使用即视为同意以下全部条款。**
+> 完整条款见 [DISCLAIMER.md](./DISCLAIMER.md)。**本工具仅供合法授权安全测试及教育用途。使用即视为同意以下全部条款。**
 
 ### 授权范围
 
