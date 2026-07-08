@@ -82,14 +82,25 @@ pip install -r aimy/requirements.txt
 cp .env.example .env
 ```
 
-用记事本或 VS Code 打开 `.env` 文件，填入 API Key。**至少填一个 LLM Key**：
+用记事本或 VS Code 打开 `.env` 文件，填入 API Key。**至少填一个**，填哪个用哪个：
 
 ```ini
-# 至少选一个填（推荐 GPT-5.5 或龙猫）
-GPT5_API_KEY=sk-你的Key        # OpenAI 兼容的 API
-LONGCAT_API_KEY=ak_你的Key     # 龙猫-2.0（国内可用，无需翻墙）
+# === 任选一个填即可 ===
+ANTHROPIC_API_KEY=sk-ant-xxx     # Claude (Anthropic)
+OPENAI_API_KEY=sk-xxx            # GPT-5.5 / GPT-4 (OpenAI)
+LONGCAT_API_KEY=ak_xxx           # 龙猫-2.0 (美团, 国内无需翻墙)
+DEEPSEEK_API_KEY=sk-xxx          # DeepSeek (便宜, 挖洞够用)
+GROQ_API_KEY=gsk_xxx             # Groq (免费额度, 速度极快)
+GEMINI_API_KEY=AIza-xxx          # Gemini (Google)
+XAI_API_KEY=xai-xxx              # Grok (xAI)
+OPENROUTER_API_KEY=sk-or-xxx     # OpenRouter (聚合上百模型)
+MOONSHOT_API_KEY=sk-xxx          # Kimi (月之暗面)
+MISTRAL_API_KEY=xxx              # Mistral
+TOGETHER_API_KEY=xxx             # Together AI
+CEREBRAS_API_KEY=xxx             # Cerebras (极速推理)
+PERPLEXITY_API_KEY=pplx-xxx      # Perplexity
 
-# 可选 — HackerOne 同步（填了可以自动查历史报告）
+# === 可选 — HackerOne 同步 ===
 H1_USERNAME=你的H1用户名
 H1_TOKEN=你的H1_Token
 ```
