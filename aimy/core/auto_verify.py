@@ -324,6 +324,7 @@ class Autopilot:
                     severity=f.get("severity", ""),
                     technique=f.get("summary","")[:200],
                     outcome="",
+                    prompt=getattr(state, 'last_prompt', query),
                 )
                 findings.append({**f, "target": target})
                 self._log(f"  [Phase 4] Recorded: {f.get('tool','')} @ {target}")

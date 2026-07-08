@@ -100,6 +100,7 @@ class ReActLoop:
         if extra_context:
             system_msg += f"\n\n--- Additional Context ---\n{extra_context}"
 
+        state.last_prompt = user_input  # capture for flywheel
         state.messages = [{"role": "system", "content": system_msg}]
         state.messages.append({"role": "user", "content": user_input})
 
@@ -323,6 +324,7 @@ class ReActLoop:
                 technique=summary[:200],
                 endpoint=endpoint,
                 outcome="",
+                prompt=self.state.last_prompt,
             )
             recorded += 1
 
@@ -357,6 +359,7 @@ class ReActLoop:
                     severity=severity,
                     technique=f"[auto-detected] {snippet[:120]}",
                     outcome="",
+                    prompt=self.state.last_prompt,
                 )
                 recorded += 1
                 already.add(snippet[:50])

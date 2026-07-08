@@ -60,6 +60,9 @@ class AgentState:
     extra_context: str = ""
     """Additional context injected into system prompt (skills, patterns, etc.)."""
 
+    last_prompt: str = ""
+    """The user's last input — captured for flywheel prompt tracking."""
+
     scope_file: str = ""
     """Path to scope file for safety checks."""
 
