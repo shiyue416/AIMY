@@ -2,8 +2,8 @@
 
 <p align="center">
   <strong>180+ attack skills &middot; 120+ Python detectors &middot; 3,000+ H1 reports &middot; 50,000 WooYun cases</strong><br>
-  
-  <sub>7-phase hunt pipeline · 35 trigger-keyword auto-load · 14-project r
+  Four-source fusion — HackSkills · Anthropic · src-hunter · Mingxi injection<br>
+  <sub>7-phase hunt pipeline · 35 trigger-keyword auto-load · 14-project red-line comparison (45/50)</sub>
 </p>
 
 ---
@@ -24,9 +24,9 @@ python aimy.py -q "hunt example.com"        # single query
 
 ---
 
-## Usage — Step by Step
+## 使用指南 — 新用户从零开始
 
-### Step 1: Install
+### 第一步：安装
 
 ```bash
 git clone https://github.com/shiyue416/AIMY.git
@@ -34,109 +34,109 @@ cd AIMY
 pip install -r aimy/requirements.txt
 ```
 
-### Step 2: Configure
+### 第二步：配置
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set at minimum:
+编辑 `.env`，至少填入：
 
 ```ini
-GPT5_API_KEY=sk-your-api-key-here   # required — LLM provider
+GPT5_API_KEY=sk-你的APIKey   # 必填 — LLM 提供商
 ```
 
-Optional extras:
+可选项：
 
 ```ini
-AIMY_MODE=veteran               # veteran (default, high-value only) | rookie (full output)
-AIMY_SCENE=bounty               # bounty (default) | pentest | redteam | auto-pentest
-H1_USERNAME=your_h1_username    # for HackerOne flywheel sync
-H1_TOKEN=your_h1_token          # for HackerOne flywheel sync
-BURP_MCP_TOKEN=your_token       # for Burp Suite integration
+AIMY_MODE=veteran               # veteran（默认，只关注高价值漏洞）| rookie（完整输出）
+AIMY_SCENE=bounty               # bounty（默认）| pentest | redteam | auto-pentest
+H1_USERNAME=你的H1用户名        # HackerOne 飞轮同步
+H1_TOKEN=你的H1_Token           # HackerOne 飞轮同步
+BURP_MCP_TOKEN=你的BurpToken    # Burp Suite 集成
 ```
 
-### Step 3: Verify setup
+### 第三步：验证环境
 
 ```bash
-python aimy.py --list-providers    # confirm LLM is reachable
-python -m aimy.memory.session_brief # read this week's top techniques (optional)
+python aimy.py --list-providers     # 确认 LLM 连通
+python -m aimy.memory.session_brief # 查看本周高命中技法排行（可选）
 ```
 
-### Step 4: Start hunting
+### 第四步：开始挖洞
 
 ```bash
-# Interactive mode — type commands directly
+# 交互模式 — 直接敲命令
 python aimy.py
 
-# One-shot — single query
-python aimy.py -q "hunt example.com for ssrf"
+# 一句话模式 — 单次查询
+python aimy.py -q "hunt example.com 挖 ssrf"
 
-# Targeted — full pipeline on one domain
+# 目标模式 — 对单个域名跑完整流程
 python aimy.py --target example.com
 ```
 
-### Step 5: Run the 7-phase pipeline
+### 第五步：走七阶段管线
 
 ```bash
-/recon target.com       # Phase 2 — passive recon (zero packets to target)
-/hunt target.com        # Phase 3+4 — active probing + vulnerability hunting
-/hunt target.com --vuln-class sqli   # Phase 4 — focus on one vuln class
-/hunt target.com --autonomous        # Phase 4 — exhaustive (26 classes, ≥25 attempts each)
-/validate               # Phase 5 — 8-question verification gate
-/report                 # Phase 6 — generate submission-ready report
-/report bounty          # Phase 6 — H1/Bugcrowd/Intigriti format
+/recon target.com              # Phase 2 — 被动侦察（零发包）
+/hunt target.com               # Phase 3+4 — 主动探测 + 漏洞挖掘
+/hunt target.com --vuln-class sqli   # Phase 4 — 只挖 SQL 注入
+/hunt target.com --autonomous        # Phase 4 — 全覆盖（26 类漏洞，每类 ≥25 次）
+/validate                      # Phase 5 — 8 问验证门
+/report                        # Phase 6 — 生成可提交的报告
+/report bounty                 # Phase 6 — 赏金平台格式（H1/Bugcrowd/Intigriti）
 ```
 
-### Step 6: Interpret results
+### 第六步：看懂输出
 
-| Output | Meaning |
-|--------|---------|
-| `[vuln] Confirmed: SSRF in /api/proxy` | Verified finding — ready to report |
-| `[warn] Downgraded: reflected XSS → informatory` | Validated but low impact — skip (in veteran mode) |
-| `[reject] Rejected by Validator (Q3: out-of-scope)` | Failed verification gate — do NOT report |
-| `No signal on /api/...` | Endpoint tested, nothing found — move on |
+| 输出 | 含义 |
+|------|------|
+| `[vuln] Confirmed: SSRF in /api/proxy` | 已验证的漏洞 — 可以写报告 |
+| `[warn] Downgraded: reflected XSS → informatory` | 确认存在但影响低 — 跳过（老鸟模式自动过滤） |
+| `[reject] Rejected by Validator (Q3: 不在 scope)` | 未通过验证门 — 不要提交 |
+| `No signal on /api/...` | 端点测过了，没东西 — 换下一个 |
 
-### Step 7: Repeat & improve
+### 第七步：迭代进化
 
 ```bash
-# Run the flywheel — learns from your findings
+# 跑飞轮 — 从你的发现中自动学习
 python aimy.py --flywheel
 
-# Check updated technique rankings
+# 查看更新的技法排名
 python -m aimy.memory.session_brief
 
-# Start next hunt with updated knowledge
-python aimy.py --target next-target.com
+# 带着更新的知识挖下一个目标
+python aimy.py --target 下一个目标.com
 ```
 
 ---
 
-## Modes
+## 运行模式
 
-AIMY has two runtime modes and four scene modes, controlled by environment variables.
+两种运行时模式 + 四种场景模式，通过环境变量控制。
 
-### Runtime Mode
+### 老鸟 vs 菜鸟
 
-| Mode | Env | Behavior |
-|------|-----|----------|
-| **Veteran** (default) | `AIMY_MODE=veteran` | High-value vulns only. Auto-filters `reflected_xss \| open_redirect \| info_disclosure \| low \| info \| information`. Concise output. |
-| **Rookie** | `AIMY_MODE=rookie` | Full output with explanations + remediation advice. No severity filter. |
+| 模式 | 环境变量 | 行为 |
+|------|---------|------|
+| **老鸟**（默认） | `AIMY_MODE=veteran` | 只关注高价值漏洞。自动过滤 `reflected_xss \| open_redirect \| info_disclosure \| low \| info \| information`。输出简洁。 |
+| **菜鸟** | `AIMY_MODE=rookie` | 完整输出 + 修复建议。不按严重程度过滤。 |
 
-### Scene Mode
+### 场景模式
 
-| Scene | `AIMY_SCENE=` | Goal | Key Difference |
-|-------|--------------|------|----------------|
-| **Bounty** (default) | `bounty` | Find high-bounty vulns for SRC/H1 | Read-only, prove-then-stop, ≤3 user records max |
-| **Pentest** | `pentest` | Full engagement deliverable | Post-exploit chains, lateral movement, evidence collection |
-| **Red Team** | `redteam` | Simulated adversary | Kill-chain focus, stealth, persistence evaluation |
-| **Auto-Pentest** | `auto-pentest` | Autonomous end-to-end | No human-in-the-loop, exhaustive coverage contract |
+| 场景 | `AIMY_SCENE=` | 目标 | 关键区别 |
+|------|--------------|------|----------|
+| **赏金**（默认） | `bounty` | 找 SRC/H1 高赏金漏洞 | 只读，证明即停，最多取 3 条用户数据 |
+| **渗透测试** | `pentest` | 完整渗透交付报告 | 后利用链、横向移动、证据收集 |
+| **红队** | `redteam` | 模拟真实攻击 | 杀伤链导向、隐蔽、持久化评估 |
+| **全自动渗透** | `auto-pentest` | 端到端自主渗透 | 无人介入，全量覆盖 |
 
 ```bash
-# Example: rookie mode + bounty scene
+# 示例：菜鸟模式 + 赏金场景
 AIMY_MODE=rookie AIMY_SCENE=bounty python aimy.py --target target.com
 
-# Example: veteran mode + auto-pentest
+# 示例：老鸟模式 + 全自动渗透
 AIMY_MODE=veteran AIMY_SCENE=auto-pentest python aimy.py --target target.com --autonomous
 ```
 
@@ -179,9 +179,9 @@ references/                    5,891 reference files
 
 ---
 
-## Usage — 7-Phase Hunt Pipeline
+## 使用 — 七阶段挖洞管线
 
-Every hunt follows a deterministic 7-phase workflow. Each phase has entry/exit gates.
+每次挖洞遵循确定性七阶段流程，每阶段有入口/出口关卡。
 
 ### Phase 1: Intake (5 min)
 
@@ -293,11 +293,11 @@ python -m aimy.memory.session_brief
 
 ---
 
-## Skill Auto-Load System
+## Skill 自动加载系统
 
-Every vulnerability class has a trigger table. When the AI detects a matching keyword in the user's input or the target's response, the corresponding skill loads **before any payload is generated**.
+每种漏洞类都有触发词表。当 AI 在用户输入或目标响应中检测到匹配关键词时，对应 Skill 在**生成任何 payload 之前**自动加载。
 
-**Hard constraint: no payload from training memory — everything from skill files.**
+**硬约束：禁止凭记忆生成 payload — 一切来自 Skill 文件。**
 
 | Trigger Keywords | Skill Loaded |
 |-----------------|-------------|
@@ -337,115 +337,115 @@ Every vulnerability class has a trigger table. When the AI detects a matching ke
 
 ---
 
-## Safety Constraints (Iron Rules)
+## 安全约束（铁规）
 
-Violating any of these → immediate stop, no exceptions.
+违反任何一条 → 立刻停止，不做辩解。
 
-### Rate Limiting
+### 速率限制
 
-| Constraint | Value |
-|------------|-------|
-| Max request rate | **1 req/s** (interval ≥1 second) |
-| Daily quota (same target) | **500 requests/day** |
-| Max concurrency | **5** |
-| curl flags (built-in) | `--max-time 10 --limit-rate 100K` |
-| Circuit breaker | >10 consecutive errors → auto-pause **5 minutes** |
+| 约束 | 数值 |
+|------|------|
+| 最大请求速率 | **1 req/s**（间隔 ≥1 秒）|
+| 同日同一目标上限 | **500 次/天** |
+| 最大并发 | **5** |
+| curl 内置参数 | `--max-time 10 --limit-rate 100K` |
+| 断路器 | 连续错误 >10 次 → 自动暂停 **5 分钟** |
 
-### Attack Scope
+### 攻击范围
 
-- ✅ Only in-scope assets
-- ✅ Only user-authorized domains (confirmed per-session)
-- ✅ Pre-flight output before any active action: target URL + request count + expected impact → wait for confirmation
-- ❌ No out-of-scope domain requests
-- ❌ No internal network/port scanning
-- ❌ No unauthorized subdomain scanning
+- ✅ 仅 scope 内资产
+- ✅ 仅用户明确授权的域名（逐次会话确认）
+- ✅ 主动行动前预检输出：目标 URL + 请求数 + 预期影响 → 等用户确认
+- ❌ 不对 scope 外域名发包
+- ❌ 不扫内网/端口
+- ❌ 不扫未授权子域名
 
-### Data Safety
+### 数据安全
 
-| Rule | Limit |
-|------|-------|
-| User data to confirm | **≤3 records**, stop immediately |
-| On data leak discovery | **Stop immediately**, do not expand |
-| User data storage | **Never** store locally |
-| PII in PoC | **Redacted** (first 2 + last 2 chars, or SHA256 fingerprint) |
+| 规则 | 限额 |
+|------|------|
+| 确认漏洞所需用户数据 | **≤3 条**，到量立刻停 |
+| 发现数据泄露 | **立刻停止**，不扩大 |
+| 用户数据存储 | **绝不**存在本地 |
+| PoC 中 PII | **脱敏**（前 2+后 2 位，或 SHA256 指纹）|
 
-### Prohibited Actions
+### 禁止行为
 
-- ❌ DoS / concurrency >5 / infinite loops / infinite recursion
-- ❌ Modify/delete/overwrite data
-- ❌ Scan internal network ports/services
-- ❌ Upload webshell to production
-- ❌ Build/distribute attack tools (exploit framework / C2 / malware)
-- ❌ Supply chain poisoning (NPM/PyPI/GitHub Actions injection)
-- ❌ Bypass CAPTCHA / human verification
-- ❌ Bypass MFA/2FA
-- ❌ Brute-force real user accounts
-- ❌ Use public DNSLog platforms (must use vendor platform or self-hosted interactsh)
-- ❌ Guess/substitute/hardcode when env vars missing (must abort)
+- ❌ DoS / 并发 >5 / 无限循环 / 无限递归
+- ❌ 修改/删除/覆盖他人数据
+- ❌ 扫描内网端口/服务
+- ❌ 上传 webshell 到生产环境
+- ❌ 构建/分发攻击工具（exploit framework / C2 / 恶意软件）
+- ❌ 供应链投毒（NPM/PyPI/GitHub Actions 注入）
+- ❌ 绕过验证码/人机验证
+- ❌ 绕过 MFA/2FA
+- ❌ 暴力破解真实用户账号
+- ❌ 使用公共 DNSLog 平台（必须用厂商平台或自建 interactsh）
+- ❌ 环境变量缺失时猜测/替代/硬编码（必须中止）
 
-### Compliance
+### 合规
 
-- All testing within SRC-authorized scope
-- Notify first after discovering vulnerabilities, do not exploit privately
-- Report includes testing methodology and tools
-- Comply with target country/region cybersecurity laws (CFAA / Computer Misuse Act / Cybersecurity Law)
-- All API keys/tokens via environment variables — **never hardcoded**
-- Missing required env vars → abort, no assumptions
+- 所有测试在 SRC 授权范围内进行
+- 发现漏洞先通知，不私自利用
+- 报告注明测试方法和工具
+- 遵守目标所在国家/地区网络安全法律（CFAA / 计算机滥用法 / 网络安全法）
+- 所有 API Key/Token 通过环境变量传入 — **绝不硬编码**
+- 缺失必需环境变量 → 中止，不做任何假设
 
 ---
 
-## Configuration (.env)
+## 配置（.env）
 
 ```bash
-# Required
-GPT5_API_KEY=sk-xxx                    # LLM provider (GPT-5.5 or compatible)
+# 必填
+GPT5_API_KEY=sk-xxx                    # LLM 提供商（GPT-5.5 或兼容）
 
-# Optional — HackerOne API
-H1_USERNAME=your_username
-H1_TOKEN=your_token
+# 可选 — HackerOne API
+H1_USERNAME=你的用户名
+H1_TOKEN=你的Token
 
-# Optional — Burp Suite MCP integration
-BURP_MCP_TOKEN=your_burp_token
+# 可选 — Burp Suite MCP 集成
+BURP_MCP_TOKEN=你的BurpToken
 BURP_MCP_HOST=127.0.0.1
 BURP_MCP_PORT=9444
 
-# Optional — Alternative LLM
-LONGCAT_API_KEY=ak_xxx                 # LongCat-2.0 (1.6T MoE, 1M context)
+# 可选 — 备用 LLM
+LONGCAT_API_KEY=ak_xxx                 # 龙猫-2.0（1.6T MoE, 1M 上下文）
 
-# Mode
-AIMY_MODE=veteran                      # veteran | rookie
-AIMY_SCENE=bounty                      # bounty | pentest | redteam | auto-pentest
-AIMY_TELEMETRY_ENABLED=false           # internal quality tracking (silent)
+# 运行模式
+AIMY_MODE=veteran                      # veteran（老鸟）| rookie（菜鸟）
+AIMY_SCENE=bounty                      # bounty（赏金）| pentest | redteam | auto-pentest
+AIMY_TELEMETRY_ENABLED=false           # 内部质量追踪（静默）
 ```
 
 ---
 
-## Agent System — Specialized Hunters
+## Agent 系统 — 专项猎手
 
-AIMY spawns specialized sub-agents for different vulnerability classes:
+AIMY 针对不同漏洞类启动专项子 Agent：
 
-| Agent | Focus | Key Tools |
-|-------|-------|-----------|
-| `ssrf-hunter` | SSRF detection | OOB + interactsh + bypasses |
-| `sqli-hunter` | SQL injection | Boolean, time, error, OOB |
-| `xss-hunter` | XSS | Reflected, stored, DOM-based |
-| `idor-hunter` | IDOR/BOLA | Object-level authorization |
-| `rce-hunter` | RCE | SSTI, deserialization, CMDi, XXE |
-| `validator` | Deterministic verification | curl-based True/False + 8-Question Gate |
-| `coordinator` | Multi-agent orchestration | Parallel hunting dispatch |
+| Agent | 专攻 | 核心工具 |
+|-------|------|----------|
+| `ssrf-hunter` | SSRF 检测 | OOB + interactsh + 绕过 |
+| `sqli-hunter` | SQL 注入 | 布尔、时间、报错、OOB |
+| `xss-hunter` | XSS | 反射、存储、DOM |
+| `idor-hunter` | IDOR/BOLA | 对象级越权 |
+| `rce-hunter` | RCE | SSTI、反序列化、CMDi、XXE |
+| `validator` | 确定性验证 | curl 验证 + 8 问门 |
+| `coordinator` | 多 Agent 编排 | 并行挖洞调度 |
 
 ---
 
-## Documentation Map
+## 文档索引
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| [README.md](./README.md) | This file — overview, usage, modes, safety | ~300 |
-| [SKILL.md](./SKILL.md) | Fusion-router — 4-source dispatch table (53KB) | 1,033 |
-| [INDEX.md](./INDEX.md) | Complete skill index with cross-references | ~600 |
-| [QUICKSTART.md](./QUICKSTART.md) | Step-by-step hunt manual with checklists | 751 |
-| [CLAUDE.md](./CLAUDE.md) | Agent identity, conventions, tech stack, priorities | ~400 |
+| 文件 | 内容 | 行数 |
+|------|------|------|
+| [README.md](./README.md) | 本文件 — 概述、用法、模式、安全规则 | ~450 |
+| [SKILL.md](./SKILL.md) | Fusion-router 四源调度中枢（53KB） | 1,033 |
+| [INDEX.md](./INDEX.md) | 完整技能索引 + 交叉引用 | ~600 |
+| [QUICKSTART.md](./QUICKSTART.md) | 快速入门手册（含每步清单） | ~200 |
+| [CLAUDE.md](./CLAUDE.md) | Agent 身份定义、约定、技术栈、优先级 | ~400 |
 
-## License
+## 许可证
 
-MIT — see individual skill files for their respective licenses.
+MIT — 各 Skill 文件见各自许可证。

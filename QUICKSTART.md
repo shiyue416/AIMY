@@ -1,37 +1,37 @@
-# Quick Start — First Hunt in 5 Minutes
+# 快速入门 — 5 分钟上手挖洞
 
-> Prerequisites: Python 3.10+, Git, an LLM API key (GPT-5.5 or compatible).
-> This guide assumes the **bounty** scene (read-only, prove-then-stop). For pentest/redteam, see [Mode Reference](#modes).
+> 前置条件：Python 3.10+、Git、一个 LLM API Key（GPT-5.5 或兼容）。
+> 本指南默认 **赏金模式**（只读、证明即停）。渗透/红队模式见[模式说明](#运行模式)。
 
 ---
 
-## 0. Install & Configure
+## 0. 安装配置
 
 ```bash
 git clone https://github.com/shiyue416/AIMY.git && cd AIMY
 pip install -r aimy/requirements.txt
 cp .env.example .env
-# Edit .env → set GPT5_API_KEY=sk-xxx (required)
+# 编辑 .env，至少填入 GPT5_API_KEY=sk-xxx
 ```
 
-## 1. Verify
+## 1. 验证环境
 
 ```bash
-python aimy.py --list-providers    # confirm LLM is reachable
-python -m aimy.memory.session_brief  # read this week's top techniques
+python aimy.py --list-providers      # 确认 LLM 连通
+python -m aimy.memory.session_brief  # 查看本周高命中技法排行
 ```
 
-## 2. First Hunt
+## 2. 开始挖洞
 
 ```bash
-# Full pipeline (recon → hunt → validate → report)
+# 完整流程（侦察 → 挖洞 → 验证 → 报告）
 /recon target.com
 /hunt target.com
 /validate
 /report
 ```
 
-Or use the single-command entry:
+单命令入口：
 
 ```bash
 python aimy.py --target target.com
@@ -39,158 +39,153 @@ python aimy.py --target target.com
 
 ---
 
-## Decision Table — Which Command When
+## 命令速查 — 什么情况用什么
 
-| You want to... | Command |
-|---------------|---------|
-| Find all subdomains + assets (zero packets to target) | `/recon target.com` |
-| Hunt for a specific vuln class | `/hunt target.com --vuln-class ssrf` |
-| Exhaustively hunt ALL 26 vuln classes | `/hunt target.com --autonomous` |
-| Verify a finding before reporting | `/validate` |
-| Generate a submission-ready report | `/report` |
-| Score a finding for bounty-worthiness | `/report bounty` |
-| Resume an interrupted hunt | `/resume target.com` |
-| Check engagement status | `/status` |
+| 你想做什么 | 命令 |
+|-----------|------|
+| 发现所有子域名和资产（零发包） | `/recon target.com` |
+| 针对某个漏洞类深挖 | `/hunt target.com --vuln-class ssrf` |
+| 全面覆盖 26 种漏洞类（不遗漏） | `/hunt target.com --autonomous` |
+| 提交前验证一个发现 | `/validate` |
+| 生成可提交的报告 | `/report` |
+| 按赏金平台格式出报告 | `/report bounty` |
+| 继续上次中断的挖洞 | `/resume target.com` |
+| 查看当前挖洞进度 | `/status` |
 
 ---
 
-## Signal → Skill Routing Table
+## 信号 → Skill 自动路由表
 
-When you see these signals on a target, the corresponding skill auto-loads. No need to manually trigger.
+扫描目标时看到以下信号，对应的 Skill 会自动加载。不需要手动触发。
 
-| Signal | Auto-Loaded Skill | First Payload |
-|--------|-------------------|---------------|
+| 信号 | 自动加载 Skill | 首发 Payload |
+|------|---------------|-------------|
 | `?url=` `?redirect=` `?callback=` `?webhook=` | `ssrf-server-side-request-forgery` | `http://interactsh-server/` |
-| `?id=` `?user=` `/api/user/1` numeric IDs | `idor-broken-object-authorization` | Increment ID by 1 |
-| `?q=` `?search=` input reflected in HTML | `xss-cross-site-scripting` | `<img src=x onerror=alert(1)>` |
-| `?file=` `?page=` `?path=` `../` in URL | `path-traversal-lfi` | `../../../etc/passwd` |
-| SQL error: "syntax error" "unclosed quote" | `sqli-sql-injection` | `' OR '1'='1` |
-| `{{` `{%` in response, "template" in error | `ssti-server-side-template-injection` | `{{7*7}}` |
-| JWT in Cookie/Header (`eyJ...`) | `jwt-oauth-token-attacks` | alg:none |
+| `?id=` `?user=` `/api/user/1` 数字型 ID | `idor-broken-object-authorization` | ID +1 递增 |
+| `?q=` `?search=` 输入回显在 HTML 中 | `xss-cross-site-scripting` | `<img src=x onerror=alert(1)>` |
+| `?file=` `?page=` `?path=` URL 含 `../` | `path-traversal-lfi` | `../../../etc/passwd` |
+| SQL 报错："syntax error" "unclosed quote" | `sqli-sql-injection` | `' OR '1'='1` |
+| 响应含 `{{` `{%`、报错含 "template" | `ssti-server-side-template-injection` | `{{7*7}}` |
+| Cookie/Header 含 JWT (`eyJ...`) | `jwt-oauth-token-attacks` | alg:none |
 | `cmd=` `exec=` `ping=` `shell=` | `cmdi-command-injection` | `; id` |
-| XML body, SVG upload, `<!DOCTYPE` | `xxe-xml-external-entity` | `<!DOCTYPE x [<!ENTITY ...>` |
-| 403/401 on admin endpoints | `401-403-bypass-techniques` | Header override chain |
-| Payment form, coupon code, order flow | `business-logic-vulnerabilities` | Negative price, race checkout |
-| `__proto__` `constructor` in JSON | `prototype-pollution` | `{"__proto__":{"isAdmin":true}}` |
-| `Access-Control-Allow-Origin` header | `cors-cross-origin-misconfiguration` | Origin: attacker.com |
+| XML 请求体、SVG 上传、`<!DOCTYPE` | `xxe-xml-external-entity` | `<!DOCTYPE x [<!ENTITY ...>` |
+| 管理端点返回 403/401 | `401-403-bypass-techniques` | Header 覆盖链 |
+| 支付表单、优惠码、订单流程 | `business-logic-vulnerabilities` | 负价格、并发下单 |
+| JSON 含 `__proto__` `constructor` | `prototype-pollution` | `{"__proto__":{"isAdmin":true}}` |
+| 响应头含 `Access-Control-Allow-Origin` | `cors-cross-origin-misconfiguration` | Origin: attacker.com |
 
 ---
 
-## Modes
+## 运行模式
 
-### Runtime Mode
+### 老鸟 vs 菜鸟
 
-| Mode | Trigger | Behavior |
-|------|---------|----------|
-| Veteran (default) | `AIMY_MODE=veteran` | Filters low-value vulns, concise output |
-| Rookie | `AIMY_MODE=rookie` | Full explanation, remediation advice, no filter |
+| 模式 | 环境变量 | 行为 |
+|------|---------|------|
+| 老鸟（默认） | `AIMY_MODE=veteran` | 过滤低价值漏洞，输出简洁 |
+| 菜鸟 | `AIMY_MODE=rookie` | 完整说明 + 修复建议，不过滤 |
 
-### Scene Mode
+### 场景模式
 
-| Scene | Trigger | Read-Only | Goal |
-|-------|---------|-----------|------|
-| Bounty (default) | `AIMY_SCENE=bounty` | ✅ | Find reportable vulns, stop at proof |
-| Pentest | `AIMY_SCENE=pentest` | ❌ | Full engagement deliverable |
-| Red Team | `AIMY_SCENE=redteam` | ❌ | Kill-chain, stealth, persistence |
-| Auto-Pentest | `AIMY_SCENE=auto-pentest` | ❌ | Autonomous end-to-end |
+| 场景 | 环境变量 | 只读 | 目标 |
+|------|---------|------|------|
+| 赏金（默认） | `AIMY_SCENE=bounty` | ✅ | 找到可报告的漏洞，证明即停 |
+| 渗透测试 | `AIMY_SCENE=pentest` | ❌ | 完整渗透交付报告 |
+| 红队 | `AIMY_SCENE=redteam` | ❌ | 杀伤链、隐蔽、持久化 |
+| 全自动渗透 | `AIMY_SCENE=auto-pentest` | ❌ | 端到端自主渗透 |
 
 ---
 
-## Safety Gates (Always Active)
+## 安全门禁（始终开启）
 
-Every request passes through the Safety Gate before execution:
+每次发包前经过安全门禁：
 
-| Gate | Rule |
+| 门禁 | 规则 |
 |------|------|
-| Rate | ≤1 req/s, ≤500/day, max 5 concurrent |
-| Scope | Only authorized domains — pre-flight confirmation required |
-| Data | ≤3 user records to confirm, stop immediately on leak |
-| No-Destroy | Read-only (`id`/`whoami`/`uname`), no file write/delete |
-| No-Evade | No CAPTCHA bypass, no MFA bypass |
-| Circuit | >10 errors → auto-pause 5 min |
+| 速率 | ≤1 req/s，≤500 次/天，并发上限 5 |
+| 范围 | 只测授权域名 — 发包前必须确认 |
+| 数据 | 最多取 3 条用户数据，发现泄露立刻停 |
+| 不破坏 | 只读（`id`/`whoami`/`uname`），不写不删 |
+| 不绕过 | 不绕过验证码、不绕过 MFA |
+| 断路器 | 连续报错 >10 次 → 自动暂停 5 分钟 |
 
 ---
 
-## Phase Gates — Hunt Checklist
+## 阶段关卡 — 挖洞清单
 
-Each phase must pass its exit gate before proceeding.
+每阶段通过出口关卡才能进入下一阶段。
 
 ```
-Phase 1  □ Scope validated       □ Timebox set        □ Rules loaded
-Phase 2  □ ≥3/6 recon dims       □ Asset list built   □ Tech stack fingerprinted
-Phase 3  □ Port scan done        □ WAF identified     □ Parameter map built
-Phase 4  □ All signals triaged   □ Each vuln class ≥1 test  □ Evidence saved
-Phase 5  □ 8Q passed             □ 4G passed          □ Validator confirmed
-Phase 6  □ PII redacted          □ PoC reproducible   □ CVSS scored
-Phase 7  □ Technique recorded    □ Session brief refreshed
+Phase 1  □ 范围确认       □ 时间盒设定       □ 规则加载完成
+Phase 2  □ ≥3/6 侦察维度  □ 资产清单输出     □ 技术栈指纹识别
+Phase 3  □ 端口扫描完成   □ WAF 识别完成     □ 参数映射完成
+Phase 4  □ 所有信号遍历   □ 每类漏洞 ≥1 测试  □ 证据已保存
+Phase 5  □ 8 问全过       □ 4 关全过          □ Validator 确认
+Phase 6  □ PII 已脱敏     □ PoC 可复现        □ CVSS 已评分
+Phase 7  □ 技法已记录     □ 战报已刷新
 ```
 
 ---
 
-## Verification — 8-Question Gate
+## 验证 — 8 问门
 
-Before submitting, every finding must answer these:
+提交前每个发现必须回答：
 
-| Q | Question | Fail Action |
-|---|----------|-------------|
-| Q1 | Can an attacker reproduce it step-by-step? | Reject |
-| Q2 | Is the impact in the program's accepted list? | Reject |
-| Q3 | Is the root cause on an in-scope asset? | Reject |
-| Q4 | Does it require impossible privileges? | Reject |
-| Q5 | Is this already known/accepted behavior? | Reject |
-| Q6 | Can you prove actual business impact? | Downgrade |
-| Q7 | Is it in the never-submit list? | Reject |
-| Q8 | Does it reproduce with a different session? | Reject |
+| 问 | 问题 | 不通过 |
+|----|------|--------|
+| Q1 | 攻击者能一步步复现吗？ | 否决 |
+| Q2 | 影响在程序的接受列表里吗？ | 否决 |
+| Q3 | 根因在 scope 资产上吗？ | 否决 |
+| Q4 | 是否需要攻击者不可能拿到的权限？ | 否决 |
+| Q5 | 这是已知/已接受行为吗？ | 否决 |
+| Q6 | 能证明实际业务影响吗？ | 降级 |
+| Q7 | 在禁止提交清单里吗？ | 否决 |
+| Q8 | 换个 session 还能复现吗？ | 否决 |
 
-Never-submit list: `self-XSS | reflected XSS (no impact) | open redirect | missing security headers | version disclosure | SPF/DMARC | CORS (no credentials)`
+禁止提交清单：`自 XSS | 反射 XSS（无影响）| 开放重定向 | 缺失安全头 | 版本暴露 | SPF/DMARC | CORS（无凭证）`
 
 ---
 
-## Reporting
+## 报告
 
 ```bash
-# Generate report for all confirmed findings
-/report
-
-# Bounty platform format (H1/Bugcrowd/Intigriti)
-/report bounty
-
-# Pentest deliverable format
-/report pentest
+/report              # 所有已确认发现
+/report bounty       # 赏金平台格式（H1/Bugcrowd/Intigriti）
+/report pentest      # 渗透测试交付格式
 ```
 
-Report template:
+报告模板：
 ```
-Title:    [Vuln Type] in [Endpoint] allows [Attacker] to [Impact]
-CVSS 4.0: CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/...
-Steps:    curl -v 'https://target.com/...'
-Evidence: HTTP request/response + screenshot
-Impact:   Business-level description
+标题:    [漏洞类型] in [端点] 允许 [攻击者] [影响]
+CVSS:    CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/...
+步骤:    curl -v 'https://target.com/...'
+证据:    HTTP 请求/响应包 + 截图
+影响:    业务层面描述
 ```
 
-PII must be redacted: phone `138******12`, email `te***@example.com`, token first 2 + last 2 chars.
+PII 必须脱敏：手机 `138******12`，邮箱 `te***@example.com`，Token 留前 2 + 后 2。
 
 ---
 
-## Troubleshooting
+## 排错
 
-| Symptom | Fix |
-|---------|-----|
-| subfinder rate-limited | Use crt.sh fallback: `curl -s "https://crt.sh/?q=%25.target.com&output=json"` |
-| httpx all timeout | Try `--timeout 5`, test one with curl manually |
-| WAF blocking | Read `skills/waf-bypass-techniques/SKILL.md` → encoding ladder |
-| No JS found (SPA) | Use playwright engine: `python aimy/tools/playwright_engine.py` |
-| Stuck — no findings | Swap model: `python aimy.py -p claude -t target.com` |
-| Got rate-limited (429) | Pause 5 min, circuit breaker auto-engages |
-| Got blocked (503) | Pause 10 min, check scope, reduce concurrency |
+| 症状 | 处理 |
+|------|------|
+| subfinder 限流 | 换 crt.sh：`curl -s "https://crt.sh/?q=%25.target.com&output=json"` |
+| httpx 全超时 | 加 `--timeout 5`，先用 curl 手动测一个 |
+| 被 WAF 拦 | 读 `skills/waf-bypass-techniques/SKILL.md` → 编码升级阶梯 |
+| SPA 抓不到 JS | 用 playwright 引擎：`python aimy/tools/playwright_engine.py` |
+| 完全没思路 | 换模型再来：`python aimy.py -p claude -t target.com` |
+| 被限速（429） | 等 5 分钟，断路器自动触发 |
+| 被封（503） | 等 10 分钟，检查 scope，降低并发 |
 
 ---
 
-## Reference
+## 参考文档
 
-| Document | Purpose |
-|----------|---------|
-| [README.md](./README.md) | Full architecture, modes, skill table, safety rules |
-| [SKILL.md](./SKILL.md) | Fusion-router — 4-source dispatch (1,033 lines) |
-| [INDEX.md](./INDEX.md) | Complete skill index with cross-references |
-| [CLAUDE.md](./CLAUDE.md) | Agent identity, conventions, priorities |
+| 文档 | 内容 |
+|------|------|
+| [README.md](./README.md) | 完整架构、模式、技能表、安全规则 |
+| [SKILL.md](./SKILL.md) | Fusion-router 四源调度中枢（1033 行） |
+| [INDEX.md](./INDEX.md) | 完整技能索引 + 交叉引用 |
+| [CLAUDE.md](./CLAUDE.md) | Agent 身份定义、约定、优先级 |
