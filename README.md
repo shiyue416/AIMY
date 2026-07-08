@@ -363,14 +363,15 @@ AIMY 把挖洞拆成 7 个阶段，每个阶段有明确的输入输出。
 
 每次挖洞的发现自动记录到本地技法库，下次挖洞 AI 自动参考高命中率技法。
 
-**从本体拉取技法**（单向，你的数据不上传）：
+**子体 ↔ 本体** — 技法数据双向同步：
 
 ```bash
-aimy feedback pull                # 拉取最新的共享技法
-python -m aimy.memory.session_brief  # 查看融合后的排行榜
+aimy feedback push    # 上传你的技法到本体（只传技法名+漏洞类型）
+aimy feedback pull    # 从本体拉取最新技法到本地
+python -m aimy.memory.session_brief  # 查看融合排行榜
 ```
 
-> 只拉取技法名称和漏洞类型。你的本地数据（目标、漏洞细节、PII）**永远不离开你的机器**。
+> push 只上传技法名称和漏洞类型。**目标信息、漏洞细节、PII、payload 一律不上传。**
 
 ---
 

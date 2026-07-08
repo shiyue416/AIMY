@@ -296,12 +296,94 @@ def feedback_stats(top):
     db.close()
 
 
+@feedback.command("push")
+@click.option("--message", "-m", default="", help="Commit message")
+def feedback_push(message):
+    """Upload accepted techniques to GitHub (子体 → 本体).
+
+    Exports only technique names + vuln class from local DB.
+    No target info, no PII, no payload — just the technique signature.
+    """
+    import subprocess, sys, json
+    from pathlib import Path
+    from datetime import datetime
+    from aimy.memory.feedback import FeedbackDB
+
+    db = FeedbackDB()
+    repo_root = _find_repo_root()
+
+    if not repo_root:
+        click.secho("[!] Not inside AIMY repo.", fg="red")
+        db.close()
+        sys.exit(1)
+
+    accepted = db.get_accepted_techniques()
+    if not accepted:
+        click.secho("[!] No accepted techniques to upload. Find some bugs first!", fg="yellow")
+        db.close()
+        return
+
+    # Load existing shared techniques to dedup
+    shared_path = Path(repo_root) / "techniques.jsonl"
+    existing = set()
+    if shared_path.exists():
+        with open(shared_path, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    existing.add(json.loads(line).get("technique", ""))
+                except Exception:
+                    pass
+
+    # Append only new techniques (name + class only, no secrets)
+    new_count = 0
+    with open(shared_path, "a", encoding="utf-8") as f:
+        for t in accepted:
+            if t["technique"] not in existing:
+                entry = {
+                    "technique": t["technique"],
+                    "vuln_class": t.get("vuln_class", ""),
+                    "accepted_count": t.get("accepted", 1),
+                    "total_count": t.get("total", 1),
+                    "avg_bounty": t.get("avg_bounty", 0),
+                    "pushed_at": datetime.now().isoformat(),
+                }
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                new_count += 1
+                existing.add(t["technique"])
+
+    if new_count == 0:
+        click.secho("[*] No new techniques to upload (all already shared).", fg="yellow")
+        db.close()
+        return
+
+    # Commit and push
+    os.chdir(repo_root)
+    msg = message or f"flywheel: upload {new_count} technique(s)"
+    subprocess.run(["git", "add", "techniques.jsonl"], check=False)
+    result = subprocess.run(["git", "commit", "-m", msg], capture_output=True, text=True)
+    if result.returncode != 0:
+        click.secho(f"[!] Commit failed: {result.stderr.strip()}", fg="red")
+        db.close()
+        return
+
+    result = subprocess.run(["git", "push", "origin", "master"], capture_output=True, text=True)
+    if result.returncode != 0:
+        # Try main
+        result = subprocess.run(["git", "push", "origin", "main"], capture_output=True, text=True)
+    if result.returncode == 0:
+        click.secho(f"[+] Uploaded {new_count} technique(s) to 本体.", fg="green")
+    else:
+        click.secho(f"[!] Push failed. Try 'git push' manually or open a PR.", fg="red")
+        click.secho(f"    {result.stderr.strip()[-200:]}", fg="yellow")
+
+    db.close()
+
+
 @feedback.command("pull")
 def feedback_pull():
-    """Pull shared techniques from GitHub into local flywheel DB.
+    """Pull shared techniques from 本体 into local flywheel DB.
 
     git pull → read techniques.jsonl → import into local FeedbackDB.
-    One-way: your local data never leaves your machine.
     """
     import subprocess, sys, json
     from pathlib import Path
