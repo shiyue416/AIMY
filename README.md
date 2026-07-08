@@ -1,25 +1,25 @@
-# AIMY v3.0 — AI Bug Bounty Hunting Framework
+# AIMY v3.0 — AI 漏洞赏金猎手框架
 
 <p align="center">
-  <strong>180+ attack skills &middot; 120+ Python detectors &middot; 3,000+ H1 reports &middot; 50,000 WooYun cases</strong><br>
-  Four-source fusion — HackSkills · Anthropic · src-hunter · Mingxi injection<br>
-  <sub>7-phase hunt pipeline · 35 trigger-keyword auto-load · 14-project red-line comparison (45/50)</sub>
+  <strong>180+ 攻击技能 &middot; 120+ Python 检测器 &middot; 3,000+ H1 报告 &middot; 50,000 WooYun 案例</strong><br>
+  四源融合 — HackSkills · Anthropic · src-hunter · 洺熙注入<br>
+  <sub>七阶段挖洞管线 · 35 触发词自动加载 · GitHub 全站 14 项目红线对比最优 (45/50)</sub>
 </p>
 
 ---
 
-## Quick Start
+## 快速开始
 
 ```bash
 git clone https://github.com/shiyue416/AIMY.git
 cd AIMY
-cp .env.example .env          # fill in your API keys (see Configuration below)
+cp .env.example .env          # 编辑填入 API Key（见下方配置章节）
 pip install -r aimy/requirements.txt
 
-# Start hunting
-python aimy.py                              # interactive mode
-python aimy.py --target example.com         # targeted hunt
-python aimy.py -q "hunt example.com"        # single query
+# 开始挖洞
+python aimy.py                              # 交互模式
+python aimy.py --target example.com         # 目标模式
+python aimy.py -q "hunt example.com"        # 一句话模式
 ```
 
 ---
@@ -142,39 +142,38 @@ AIMY_MODE=veteran AIMY_SCENE=auto-pentest python aimy.py --target target.com --a
 
 ---
 
-## Architecture
+## 架构
 
 ```
-aimy/                          Python framework
-├── core/                      Orchestrator, ReAct loop, state machine, bus
-├── tools/                     120+ vulnerability detectors (BaseDetector template)
-│   ├── ssrf_detector.py       SSRF with OOB/interactsh integration
-│   ├── sqli_blind.py          Boolean/time-based blind SQLi
-│   ├── xss_detector.py        Reflected/Stored/DOM XSS with browser verification
-│   ├── ssti_detector.py       SSTI with 20+ template engines
-│   ├── jwt_detector.py        JWT alg:none, weak secret, kid injection
-│   ├── race_condition.py      TOCTOU with parallel request engine
-│   ├── deser_weaponizer.py    Java/Python/PHP deserialization gadget chains
-│   └── ...                    115+ more detectors
-├── memory/                    Flywheel: FeedbackDB, EVX evolution engine, session_brief
-├── llm/                       Multi-provider LLM client (GPT-5.5, LongCat, Claude)
-├── safety/                    Safety gate, scope validator, audit trail
-├── skills/                    Skill loader, registry, router, formatter
-├── references/                Reference loader (keyword-indexed, on-demand)
-└── telemetry/                 (Removed — merged into memory/flywheel.py)
+aimy/                          Python 框架
+├── core/                      调度器、ReAct 循环、状态机、事件总线
+├── tools/                     120+ 漏洞检测器（BaseDetector 模板方法）
+│   ├── ssrf_detector.py       SSRF + OOB/interactsh 集成
+│   ├── sqli_blind.py          布尔/时间盲注 SQLi
+│   ├── xss_detector.py        反射/存储/DOM XSS + 浏览器验证
+│   ├── ssti_detector.py       SSTI（20+ 模板引擎）
+│   ├── jwt_detector.py        JWT alg:none、弱密钥、kid 注入
+│   ├── race_condition.py      TOCTOU 并发引擎
+│   ├── deser_weaponizer.py    Java/Python/PHP 反序列化链
+│   └── ...                    115+ 更多检测器
+├── memory/                    飞轮：FeedbackDB、EVX 进化引擎、战报
+├── llm/                       多模型客户端（GPT-5.5、龙猫、Claude）
+├── safety/                    安全门禁、scope 校验、审计追踪
+├── skills/                    Skill 加载器、注册表、路由、格式化
+├── references/                参考文件加载器（按关键词索引、按需加载）
 
-skills/                        180 attack methodology skills
+skills/                        180 攻击方法论技能
 ├── ssrf-server-side-request-forgery/    SKILL.md + SCENARIOS.md + BYPASS.md
 ├── sqli-sql-injection/                  SKILL.md + BLIND.md + OOB.md + UNION.md
 ├── xss-cross-site-scripting/            SKILL.md + DOM.md + CSP_BYPASS.md
-└── ...                                  176 more skill directories
+└── ...                                  176 更多技能目录
 
-anthropic-skills/              8,946 defense/forensics/compliance skills
-references/                    5,891 reference files
-├── hackerone-reports/          3,029 disclosed H1 reports (indexed by vuln class)
-├── payload-kit/                52 specialized payload collections
-├── playbooks/                  68 attack playbooks
-└── nuclei-templates-ai/        Auto-generated Nuclei templates
+anthropic-skills/              8,946 防御/取证/合规技能
+references/                    5,891 参考文件
+├── hackerone-reports/          3,029 份已公开 H1 报告（按漏洞类索引）
+├── payload-kit/                52 个专项 Payload 集合
+├── playbooks/                  68 个攻击剧本
+└── nuclei-templates-ai/        自动生成的 Nuclei 模板
 ```
 
 ---
@@ -183,112 +182,104 @@ references/                    5,891 reference files
 
 每次挖洞遵循确定性七阶段流程，每阶段有入口/出口关卡。
 
-### Phase 1: Intake (5 min)
+### Phase 1：接单（5 分钟）
 
-Scope validation, rule loading, timebox setting.
+Scope 校验、规则加载、时间盒设定。
 
 ```bash
-# AI-driven intake
-/recon target.com          # triggers Phase 1→2
-
-# Manual scope check
-python aimy.py --target target.com --scope-only
+/recon target.com          # 触发 Phase 1→2
+python aimy.py --target target.com --scope-only   # 手动 scope 检查
 ```
 
-### Phase 2: Recon — 6-Dimension Passive
+### Phase 2：侦察 — 六维被动（零发包）
 
-**Zero packets sent to target.** All data from third-party sources.
+**不向目标发任何包。** 所有数据来自第三方数据源。
 
-| Dimension | Source | Coverage |
-|-----------|--------|----------|
-| 1. Subdomain passive | crt.sh, Chaos, subfinder, amass (-passive) | 85-92% |
-| 2. Permutation mutation | dnsgen (suffix), alterx (NLP word-segment) | 1→50x multiplier |
-| 3. Favicon correlation | mmh3 hash → FOFA icon_hash / Shodan http.favicon | Cross-asset discovery |
-| 4. ASN/IP reverse | asnmap, amass intel, bgp.he.net, RADB whois | Network-level correlation |
-| 5. CSP intelligence | CSP header parsing → trusted domain list → httpx liveness | Free subdomains |
-| 6. JS sourcemap | .js.map → source-map-unpack → TS source → endpoints + creds | Source-level attack surface |
+| 维度 | 数据源 | 覆盖率 |
+|------|--------|--------|
+| 1. 子域名被动 | crt.sh、Chaos、subfinder、amass（-passive） | 85-92% |
+| 2. 排列变异 | dnsgen（后缀）、alterx（NLP 分词） | 1→50 倍放大 |
+| 3. 图标关联 | mmh3 hash → FOFA icon_hash / Shodan http.favicon | 跨资产发现 |
+| 4. ASN/IP 反查 | asnmap、amass intel、bgp.he.net、RADB whois | 网络级关联 |
+| 5. CSP 情报 | CSP 响应头解析 → 可信域名列表 → httpx 验活 | 免费子域名 |
+| 6. JS 源码还原 | .js.map → source-map-unpack → TS 源码 → 端点+凭据 | 源码级攻击面 |
 
 ```bash
-/recon target.com                           # all 6 dimensions
-/favicon-hunt --url https://target.com      # dimension 3 only
-/asn-discovery --org "Target Corp"          # dimension 4 only
-/csp-intel --url https://target.com         # dimension 5 only
-/js-sourcemap --recon-dir recon/target.com  # dimension 6 only
+/recon target.com                           # 全部六个维度
+/favicon-hunt --url https://target.com      # 仅维度三
+/asn-discovery --org "Target Corp"          # 仅维度四
+/csp-intel --url https://target.com         # 仅维度五
+/js-sourcemap --recon-dir recon/target.com  # 仅维度六
 ```
 
-### Phase 3: Enum — Active Probing
+### Phase 3：枚举 — 主动探测
 
-Rate-limited active enumeration with safety pre-checks.
+限速主动枚举，发包前过安全门禁。
 
 ```bash
-/hunt target.com              # triggers Phase 3→4
-/hunt target.com --vuln-class ssrf   # focus on one class
+/hunt target.com                    # 触发 Phase 3→4
+/hunt target.com --vuln-class ssrf  # 只测 SSRF
 ```
 
-### Phase 4: Hunt — Signal→Playbook→Tool Dispatch
+### Phase 4：狩猎 — 信号→剧本→工具 三级调度
 
-Three-level dispatch engine:
-
-1. **Signal detection** — parameter names, HTTP headers, response patterns
-2. **Playbook selection** — maps signal to specific skill+tool
-3. **Tool execution** — runs the Python detector with the right payload
+1. **信号检测** — 参数名、HTTP 头、响应模式
+2. **剧本选择** — 把信号映射到对应的 Skill + 工具
+3. **工具执行** — 用正确的 Payload 运行 Python 检测器
 
 ```bash
-# Targeted hunting
+# 按漏洞类定向
 /hunt target.com --vuln-class idor
 /hunt target.com --vuln-class sqli
 /hunt target.com --vuln-class ssti
 
-# Autonomous (exhaustive — 26 vuln classes, ≥25 attempts/class, ≥90 min)
+# 全覆盖（26 类漏洞，每类 ≥25 次，≥90 分钟）
 /hunt target.com --autonomous
 ```
 
-### Phase 5: Validate — 8-Question Gate + 4 Acceptance Gates
+### Phase 5：验证 — 8 问门 + 4 验收关
 
-Every finding must pass:
+每个发现必须通过：
 
-| Q# | Question | Fail = |
-|----|----------|--------|
-| Q1 | Is there actual impact? | Reject |
-| Q2 | Is the impact type in the program's accepted list? | Reject |
-| Q3 | Is the root cause on an in-scope asset? | Reject |
-| Q4 | Can it be reproduced consistently? | Reject |
-| Q5 | Is there a more severe exploitation path? | Upgrade |
-| Q6 | Are all PII redacted in evidence? | Fix |
-| Q7 | Does it violate any red-line rule? | Reject |
-| Q8 | Is this a duplicate? | Dedup |
+| 问# | 问题 | 不通过则 |
+|-----|------|----------|
+| Q1 | 有实际影响吗？ | 否决 |
+| Q2 | 影响类型在程序接受列表里吗？ | 否决 |
+| Q3 | 根因在 scope 资产上吗？ | 否决 |
+| Q4 | 能稳定复现吗？ | 否决 |
+| Q5 | 有没有更严重的利用路径？ | 升级 |
+| Q6 | 证据中 PII 已脱敏？ | 修正 |
+| Q7 | 违反任何红线规则？ | 否决 |
+| Q8 | 是重复提交吗？ | 去重 |
 
-4 Acceptance Gates: evidence completeness, impact authenticity, compliance, anonymization.
+4 验收关：证据完整性、影响真实性、合规性、脱敏。
 
 ```bash
-/validate           # runs the 8-question gate
+/validate           # 执行 8 问门
 ```
 
-### Phase 6: Report — Template-Driven
+### Phase 6：报告 — 模板驱动
 
-Generates submission-ready reports with:
-- Vulnerability overview
-- Technical analysis (root cause, trigger condition, attack surface)
-- Reproduction steps / PoC
-- Impact assessment
-- Remediation suggestions
+生成可直接提交的报告，包含：
+- 漏洞概述
+- 技术分析（根因、触发条件、攻击面）
+- 复现步骤 / PoC
+- 影响评估
+- 修复建议
 
 ```bash
-/report             # generate report for all confirmed findings
-/report bounty      # bounty-platform format (H1/Bugcrowd/Intigriti)
-/report pentest     # pentest deliverable format
+/report             # 生成所有已确认发现的报告
+/report bounty      # 赏金平台格式（H1/Bugcrowd/Intigriti）
+/report pentest     # 渗透测试交付格式
 ```
 
-### Phase 7: Flywheel — Auto-Evolution
+### Phase 7：飞轮 — 自动进化
 
-Records technique outcomes, triggers skill upgrades, refreshes session brief.
+记录技法结果、触发 Skill 升级、刷新战报。
 
 ```bash
-# Manual flywheel run
-python -m aimy.memory.flywheel
-
-# Read this week's top techniques
-python -m aimy.memory.session_brief
+python -m aimy.memory.flywheel        # 手动跑飞轮
+python -m aimy.memory.session_brief   # 查看本周高命中技法排行
 ```
 
 ---
@@ -299,7 +290,7 @@ python -m aimy.memory.session_brief
 
 **硬约束：禁止凭记忆生成 payload — 一切来自 Skill 文件。**
 
-| Trigger Keywords | Skill Loaded |
+| 触发词 | 自动加载 Skill |
 |-----------------|-------------|
 | SSRF / url= / webhook / proxy / fetch / callback | `ssrf-server-side-request-forgery/SKILL.md` |
 | SQLi / id= / 注入 / union / select / sleep / error | `sqli-sql-injection/SKILL.md` |
