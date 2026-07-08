@@ -1,1 +1,1 @@
-{"technique": "seed: SSRF via URL param with interactsh callback", "vuln_class": "ssrf", "target_type": "web", "severity": "critical", "accepted_count": 0, "total_count": 0, "avg_bounty": 0, "author": "system", "pushed_at": "2026-07-08T00:00:00"}
+{"technique": "SSRF: /api/proxy?url= 参数 + interactsh OOB 回调", "vuln_class": "ssrf", "accepted_count": 1, "total_count": 1, "avg_bounty": 1500, "prompts": ["检测 https://target.com/api/proxy?url= 是否存在 SSRF 漏洞，用 interactsh 作为 OOB 回调服务器，尝试访问内网地址和云 metadata"], "pushed_at": "2026-07-08T00:00:00"}

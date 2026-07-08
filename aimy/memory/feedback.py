@@ -27,10 +27,16 @@ class FeedbackDB:
                 outcome     TEXT,
                 severity    TEXT,
                 bounty      REAL DEFAULT 0,
+                prompt      TEXT DEFAULT '',
                 submitted_at TEXT,
                 resolved_at  TEXT
             )
         """)
+        # Add prompt column if upgrading from old schema
+        try:
+            self._conn.execute("ALTER TABLE reports ADD COLUMN prompt TEXT DEFAULT ''")
+        except Exception:
+            pass
         self._conn.execute("CREATE INDEX IF NOT EXISTS idx_tech ON reports(technique)")
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS resources (
@@ -48,15 +54,15 @@ class FeedbackDB:
     def record(self, technique: str, vuln_class: str, *,
                report_id: str = "", target_type: str = "",
                outcome: str = "", severity: str = "",
-               bounty: float = 0.0) -> int:
+               bounty: float = 0.0, prompt: str = "") -> int:
         """Log a submitted report. outcome can be set later via resolve()."""
         row = self._conn.execute(
             """INSERT INTO reports
-               (report_id, technique, vuln_class, target_type, outcome, severity, bounty, submitted_at)
-               VALUES (?,?,?,?,?,?,?,?)""",
+               (report_id, technique, vuln_class, target_type, outcome, severity, bounty, prompt, submitted_at)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
             (report_id, technique, vuln_class, target_type,
              outcome.lower(), severity.lower(), bounty,
-             datetime.now().isoformat()),
+             prompt, datetime.now().isoformat()),
         )
         self._conn.commit()
         return row.lastrowid  # type: ignore[return-value]
@@ -127,26 +133,30 @@ class FeedbackDB:
         return [s["technique"] for s in all_scores[:n]]
 
     def get_accepted_techniques(self, min_accepted: int = 1) -> list[dict]:
-        """Return all accepted techniques for sharing via git push."""
+        """Return accepted techniques with prompts for sharing via git push."""
         rows = self._conn.execute("""
             SELECT technique, vuln_class, target_type, severity,
                    SUM(CASE WHEN outcome='accepted' THEN 1 ELSE 0 END) AS accepted,
                    COUNT(*) AS total,
-                   AVG(CASE WHEN outcome='accepted' THEN bounty ELSE 0 END) AS avg_bounty
+                   AVG(CASE WHEN outcome='accepted' THEN bounty ELSE 0 END) AS avg_bounty,
+                   GROUP_CONCAT(DISTINCT CASE WHEN prompt != '' THEN prompt END, '|||') AS prompts
             FROM reports
             WHERE outcome != ''
             GROUP BY technique
             HAVING accepted >= ?
             ORDER BY accepted DESC
         """, (min_accepted,)).fetchall()
-        return [
-            {
+        results = []
+        for r in rows:
+            prompts_str = r[7] or ""
+            prompt_list = [p for p in prompts_str.split("|||") if p] if prompts_str else []
+            results.append({
                 "technique": r[0], "vuln_class": r[1], "target_type": r[2] or "",
                 "severity": r[3] or "", "accepted": r[4], "total": r[5],
                 "avg_bounty": round(r[6] or 0, 2),
-            }
-            for r in rows
-        ]
+                "prompts": prompt_list[:5],  # max 5 prompts per technique
+            })
+        return results
 
     def stats(self) -> dict:
         r = self._conn.execute("""

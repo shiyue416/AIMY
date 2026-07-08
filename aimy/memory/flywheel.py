@@ -600,7 +600,7 @@ def _continuous_upgrade_check(silent: bool = True) -> bool:
 
 def record_finding(target, vuln_class, severity, technique,
                    endpoint="", report_id="", bounty=0.0, outcome="", notes="",
-                   auto_validate: bool = True):
+                   prompt: str = "", auto_validate: bool = True):
     """记录一个发现（成功或失败），自动写入三层存储，并触发持续飞轮检查。
 
     如果 auto_validate=True，会在记录前自动调用 Validator 做确定性验证。
@@ -668,7 +668,7 @@ def record_finding(target, vuln_class, severity, technique,
     try:
         from aimy.memory.feedback import FeedbackDB; db=FeedbackDB()
         db.record(technique=technique,vuln_class=vuln_class,report_id=report_id,
-                  outcome=outcome,severity=severity,bounty=bounty); db.close()
+                  outcome=outcome,severity=severity,bounty=bounty,prompt=prompt); db.close()
     except Exception: pass
     try:
         from aimy.memory.journal import HuntJournal

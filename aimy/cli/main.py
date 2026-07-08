@@ -334,7 +334,7 @@ def feedback_push(message):
                 except Exception:
                     pass
 
-    # Append only new techniques (name + class only, no secrets)
+    # Append only new techniques (technique name + prompts, no target/PII)
     new_count = 0
     with open(shared_path, "a", encoding="utf-8") as f:
         for t in accepted:
@@ -345,6 +345,7 @@ def feedback_push(message):
                     "accepted_count": t.get("accepted", 1),
                     "total_count": t.get("total", 1),
                     "avg_bounty": t.get("avg_bounty", 0),
+                    "prompts": t.get("prompts", []),
                     "pushed_at": datetime.now().isoformat(),
                 }
                 f.write(json.dumps(entry, ensure_ascii=False) + "\n")
@@ -421,6 +422,9 @@ def feedback_pull():
                 continue
             try:
                 entry = json.loads(line)
+                # Collect prompts from shared entry
+                prompts = entry.get("prompts", [])
+                prompt_str = prompts[0] if prompts else ""
                 db.record(
                     technique=entry["technique"],
                     vuln_class=entry.get("vuln_class", ""),
@@ -428,7 +432,8 @@ def feedback_pull():
                     outcome="accepted",
                     severity=entry.get("severity", ""),
                     bounty=float(entry.get("avg_bounty", 0)),
-                    report_id=f"shared:{entry.get('author', 'unknown')}",
+                    report_id=f"shared:{entry.get('pushed_at', '')}",
+                    prompt=prompt_str,
                 )
                 imported += 1
             except Exception:
