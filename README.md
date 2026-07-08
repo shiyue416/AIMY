@@ -348,18 +348,6 @@ AIMY spawns specialized sub-agents for different vulnerability classes:
 
 ---
 
-## Comparison — GitHub Red-Line Systems (14 projects)
-
-| Project | Score | Strengths |
-|---------|-------|-----------|
-| **AIMY (this)** | **45/50** | Concrete rate limits, data caps (≤3), PII format, 8Q+4G validation, Veteran/Rookie mode, CTF vs SRC mode switch |
-| pentest-agents | 30/50 | 42-line never-submit chain table, env-var-missing abort |
-| Claude-BugHunter | 28/50 | CFAA declaration, supply chain prohibition, 7-Question Gate |
-
-8 dimensions compared: rate limiting, scope, data safety, prohibited actions, non-reporting list, validation gates, architecture, academic alignment.
-
----
-
 ## Documentation Map
 
 | File | Purpose | Lines |
@@ -369,20 +357,6 @@ AIMY spawns specialized sub-agents for different vulnerability classes:
 | [INDEX.md](./INDEX.md) | Complete skill index with cross-references | ~600 |
 | [QUICKSTART.md](./QUICKSTART.md) | Step-by-step hunt manual with checklists | 751 |
 | [CLAUDE.md](./CLAUDE.md) | Agent identity, conventions, tech stack, priorities | ~400 |
-
----
-
-## External References Integrated
-
-| Repository | Author | Integration Point |
-|------------|--------|-------------------|
-| [src-hunter-skill](https://github.com/MyuriKanao/src-hunter-skill) | MyuriKanao | SRC workflow methodology, red-line rules |
-| [Claude-BugHunter](https://github.com/elementalsouls/Claude-BugHunter) | elementalsouls | 71-skill BB + red-team bundle, SECURITY.md |
-| [pentest-agents](https://github.com/H-mmer/pentest-agents) | H-mmer | Multi-agent framework, never-submit rules, brain system |
-| [PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings) | swisskyrepo | Payload catalog |
-| [HowToHunt](https://github.com/KathanP19/HowToHunt) | KathanP19 | Methodology reference |
-
----
 
 ## License
 
