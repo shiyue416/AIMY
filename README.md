@@ -24,6 +24,94 @@ python aimy.py -q "hunt example.com"        # single query
 
 ---
 
+## Usage — Step by Step
+
+### Step 1: Install
+
+```bash
+git clone https://github.com/shiyue416/AIMY.git
+cd AIMY
+pip install -r aimy/requirements.txt
+```
+
+### Step 2: Configure
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set at minimum:
+
+```ini
+GPT5_API_KEY=sk-your-api-key-here   # required — LLM provider
+```
+
+Optional extras:
+
+```ini
+AIMY_MODE=veteran               # veteran (default, high-value only) | rookie (full output)
+AIMY_SCENE=bounty               # bounty (default) | pentest | redteam | auto-pentest
+H1_USERNAME=your_h1_username    # for HackerOne flywheel sync
+H1_TOKEN=your_h1_token          # for HackerOne flywheel sync
+BURP_MCP_TOKEN=your_token       # for Burp Suite integration
+```
+
+### Step 3: Verify setup
+
+```bash
+python aimy.py --list-providers    # confirm LLM is reachable
+python -m aimy.memory.session_brief # read this week's top techniques (optional)
+```
+
+### Step 4: Start hunting
+
+```bash
+# Interactive mode — type commands directly
+python aimy.py
+
+# One-shot — single query
+python aimy.py -q "hunt example.com for ssrf"
+
+# Targeted — full pipeline on one domain
+python aimy.py --target example.com
+```
+
+### Step 5: Run the 7-phase pipeline
+
+```bash
+/recon target.com       # Phase 2 — passive recon (zero packets to target)
+/hunt target.com        # Phase 3+4 — active probing + vulnerability hunting
+/hunt target.com --vuln-class sqli   # Phase 4 — focus on one vuln class
+/hunt target.com --autonomous        # Phase 4 — exhaustive (26 classes, ≥25 attempts each)
+/validate               # Phase 5 — 8-question verification gate
+/report                 # Phase 6 — generate submission-ready report
+/report bounty          # Phase 6 — H1/Bugcrowd/Intigriti format
+```
+
+### Step 6: Interpret results
+
+| Output | Meaning |
+|--------|---------|
+| `[vuln] Confirmed: SSRF in /api/proxy` | Verified finding — ready to report |
+| `[warn] Downgraded: reflected XSS → informatory` | Validated but low impact — skip (in veteran mode) |
+| `[reject] Rejected by Validator (Q3: out-of-scope)` | Failed verification gate — do NOT report |
+| `No signal on /api/...` | Endpoint tested, nothing found — move on |
+
+### Step 7: Repeat & improve
+
+```bash
+# Run the flywheel — learns from your findings
+python aimy.py --flywheel
+
+# Check updated technique rankings
+python -m aimy.memory.session_brief
+
+# Start next hunt with updated knowledge
+python aimy.py --target next-target.com
+```
+
+---
+
 ## Modes
 
 AIMY has two runtime modes and four scene modes, controlled by environment variables.
