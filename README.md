@@ -535,6 +535,30 @@ export AIMY_MODE=rookie    # 菜鸟 — 显示所有发现 + 详细修复建议
 | `safety_precheck.sh` | 发包前安全门禁 |
 | `setup-tools.sh` | 一键安装全部工具链 |
 
+### Python 安全执行层（红线代码落地）
+
+> Shell 脚本负责资产收集，Python 负责**安全约束强制执行**。以下工具构成五层安全防线：
+
+| 工具 | 防线 | 职责 |
+|------|------|------|
+| `settings.py` | 参数中枢 | 断路器、限速器、日配额、scope 白名单、只读模式——所有安全参数集中管理 |
+| `safety_enforcer.py` | 装饰器拦截 | `@with_safety` 装饰器，五道闸门（scope→circuit→quota→concur→rate），触碰任一道打印中文告警并跳过检测 |
+| `http_client.py` | 请求关卡 | 替代裸 requests.Session，内置 CAPTCHA/MFA 自动检测、PII 敏感数据扫描、中文红线告警 |
+| `human_gate.py` | 人工提醒 | 代码做不到、必须人判断的 4 条红线：数据归属、敏感识别、边界判断、取证即停 |
+| `base_detector.py` | 检测基类 | 基线对比防认证墙误报 + 检测前/确认后双重 hook |
+| `active_prober.py` | 统一入口 | 所有主动发包必须经由 HttpClient，绕过者被 `@with_safety` 拦截 |
+
+**防线覆盖**：
+
+```
+用户触发检测
+  → @with_safety 装饰器         (Gate 1-5: scope/circuit/quota/concur/rate)
+  → HttpClient 请求关           (CAPTCHA/MFA 检测 + PII 扫描)
+  → BaseDetector 基线对比        (防认证墙误报)
+  → Human Gate 醒觉提醒          (数据归属/边界/取证即停)
+  → 漏洞确认 → 打印中文告警 → 停止
+```
+
 ---
 
 ## 架构
@@ -543,7 +567,15 @@ export AIMY_MODE=rookie    # 菜鸟 — 显示所有发现 + 详细修复建议
 AIMY/
 ├── aimy/                      Python 框架 (261 .py)
 │   ├── core/                  调度器 · ReAct 循环 · 状态机 · 阶段管理
-│   ├── tools/                 120+ 漏洞检测器 · HTTP 客户端 · 安全门禁
+│   ├── tools/                 120+ 漏洞检测器 + 五层安全执行层
+│   │   ├── ── 安全执行层 ──
+│   │   ├── settings.py          断路器/限速器/scope/只读模式
+│   │   ├── safety_enforcer.py   @with_safety 五关装饰器
+│   │   ├── http_client.py       CAPTCHA/MFA检测 + PII扫描
+│   │   ├── human_gate.py        数据归属/边界/取证即停提醒
+│   │   ├── base_detector.py    模板方法 + 基线对比 + hook
+│   │   ├── active_prober.py    HttpClient 统一入口
+│   │   ├── ── 漏洞检测器 ──
 │   │   ├── ssrf_detector.py    SSRF 检测 + OOB/interactsh
 │   │   ├── sqli_blind.py       布尔/时间盲注 SQLi
 │   │   ├── xss_detector.py     反射/存储/DOM XSS
