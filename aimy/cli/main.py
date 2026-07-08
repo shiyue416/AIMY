@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import os
-import subprocess
 import sys
-from datetime import datetime
-from pathlib import Path
 
 import click
 
@@ -300,15 +296,15 @@ def feedback_stats(top):
     db.close()
 
 
-@feedback.command("push")
-@click.option("--message", "-m", default="", help="Commit message")
-def feedback_push(message):
-    """Push local accepted techniques to GitHub (shared techniques.jsonl).
+@feedback.command("pull")
+def feedback_pull():
+    """Pull shared techniques from GitHub into local flywheel DB.
 
-    Exports accepted techniques from local DB → commits to repo → pushes to origin.
-    Other users' 'aimy feedback pull' will pick up your techniques.
+    git pull → read techniques.jsonl → import into local FeedbackDB.
+    One-way: your local data never leaves your machine.
     """
-    import subprocess, sys
+    import subprocess, sys, json
+    from pathlib import Path
     from aimy.memory.feedback import FeedbackDB
 
     db = FeedbackDB()
@@ -319,96 +315,30 @@ def feedback_push(message):
         db.close()
         sys.exit(1)
 
-    # Get accepted techniques from local DB
-    accepted = db.get_accepted_techniques()
-    if not accepted:
-        click.secho("[!] No accepted techniques to push. Find some bugs first!", fg="yellow")
-        db.close()
-        return
-
-    # Load existing shared techniques
-    shared_path = Path(repo_root) / "techniques.jsonl"
-    existing = set()
-    if shared_path.exists():
-        with open(shared_path, encoding="utf-8") as f:
-            for line in f:
-                try:
-                    entry = json.loads(line)
-                    existing.add(entry.get("technique", ""))
-                except Exception:
-                    pass
-
-    # Append new techniques (dedup by technique name)
-    new_count = 0
-    with open(shared_path, "a", encoding="utf-8") as f:
-        for t in accepted:
-            if t["technique"] not in existing:
-                entry = {
-                    "technique": t["technique"],
-                    "vuln_class": t.get("vuln_class", ""),
-                    "target_type": t.get("target_type", ""),
-                    "severity": t.get("severity", ""),
-                    "accepted_count": t.get("accepted", 0),
-                    "total_count": t.get("total", 0),
-                    "avg_bounty": t.get("avg_bounty", 0),
-                    "author": os.environ.get("H1_USERNAME", os.environ.get("USER", "anonymous")),
-                    "pushed_at": datetime.now().isoformat(),
-                }
-                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-                new_count += 1
-                existing.add(t["technique"])
-
-    if new_count == 0:
-        click.secho("[*] No new techniques to push (all already shared).", fg="yellow")
-        db.close()
-        return
-
-    # Commit and push
-    os.chdir(repo_root)
-    msg = message or f"flywheel: share {new_count} technique(s)"
-    subprocess.run(["git", "add", "techniques.jsonl"], check=False)
-    subprocess.run(["git", "commit", "-m", msg], check=False)
-    subprocess.run(["git", "push", "origin", "master"], check=False)
-
-    click.secho(f"[+] Pushed {new_count} technique(s) to GitHub. Other users can 'aimy feedback pull'.", fg="green")
-    db.close()
-
-
-@feedback.command("pull")
-def feedback_pull():
-    """Pull shared techniques from GitHub and merge into local flywheel DB.
-
-    git pull → read techniques.jsonl → import into local FeedbackDB → regenerate session_brief.
-    """
-    import subprocess, sys
-    from aimy.memory.feedback import FeedbackDB
-
-    db = FeedbackDB()
-    repo_root = _find_repo_root()
-
-    if not repo_root:
-        click.secho("[!] Not inside AIMY repo.", fg="red")
-        db.close()
-        sys.exit(1)
-
     # Pull latest
     os.chdir(repo_root)
     result = subprocess.run(["git", "pull", "origin", "master"], capture_output=True, text=True)
-    click.echo(result.stdout.strip())
+    if result.returncode != 0:
+        # Try main if master fails
+        result = subprocess.run(["git", "pull", "origin", "main"], capture_output=True, text=True)
+    click.echo(result.stdout.strip()[-200:] if len(result.stdout.strip()) > 200 else result.stdout.strip())
 
     # Read shared techniques
     shared_path = Path(repo_root) / "techniques.jsonl"
     if not shared_path.exists():
-        click.secho("[!] No shared techniques.jsonl found.", fg="yellow")
+        click.secho("[!] No shared techniques.jsonl found in repo.", fg="yellow")
         db.close()
         return
 
     imported = 0
+    skipped = 0
     with open(shared_path, encoding="utf-8") as f:
         for line in f:
+            line = line.strip()
+            if not line:
+                continue
             try:
                 entry = json.loads(line)
-                # Import into local DB (dedup by technique name)
                 db.record(
                     technique=entry["technique"],
                     vuln_class=entry.get("vuln_class", ""),
@@ -416,22 +346,24 @@ def feedback_pull():
                     outcome="accepted",
                     severity=entry.get("severity", ""),
                     bounty=float(entry.get("avg_bounty", 0)),
-                    report_id=f"shared:{entry.get('author', 'unknown')}:{entry.get('pushed_at', '')}",
+                    report_id=f"shared:{entry.get('author', 'unknown')}",
                 )
                 imported += 1
             except Exception:
-                pass
+                skipped += 1
 
     db.close()
 
-    # Regenerate session_brief
+    # Refresh session_brief
     try:
         subprocess.run([sys.executable, "-m", "aimy.memory.session_brief"], check=False)
     except Exception:
         pass
 
     click.secho(f"[+] Pulled {imported} shared technique(s) into local flywheel.", fg="green")
-    click.secho("[*] Run 'python -m aimy.memory.session_brief' to see merged rankings.", fg="cyan")
+    if skipped:
+        click.secho(f"    ({skipped} skipped)", fg="yellow")
+    click.secho("[*] Your local data stays on your machine. Nothing is uploaded.", fg="cyan")
 
 
 def _find_repo_root() -> str:
