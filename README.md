@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>180+ 攻击技能 &middot; 120+ Python 检测器 &middot; 3,000+ H1 报告 &middot; 50,000 WooYun 案例</strong><br>
-  四源融合 — HackSkills · Anthropic · src-hunter · 洺熙注入<br>
+  
   <sub>七阶段挖洞管线 · 35 触发词自动加载 · GitHub 全站 14 项目红线对比最优 (45/50)</sub>
 </p>
 
