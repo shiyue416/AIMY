@@ -1,6 +1,10 @@
 # 免责声明 / Disclaimer
 
-> **本工具仅供合法授权安全测试及教育用途。使用即视为同意以下全部条款。**
+**工具仅用于授权安全测试，请勿用于非法用途。开发人员不承担任何责任，也不对任何滥用或损坏负责。**
+
+**This tool is for authorized security testing only. Do not use for illegal purposes. The developer assumes no liability and is not responsible for any misuse or damage.**
+
+使用即视为同意以下全部条款。By using it, you agree to all terms below.
 > **This tool is for authorized security testing and educational purposes only. By using it, you agree to all terms below.**
 
 ---
